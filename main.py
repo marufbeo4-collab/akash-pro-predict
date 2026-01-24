@@ -1,24 +1,27 @@
-import asyncio
 import logging
 import random
 import time
 import os
-import httpx
+import requests
+import asyncio
 from threading import Thread
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 from flask import Flask
 
-# ================= CONFIGURATION =================
-
+# ================= CONFIGURATION (AKASH VIP) =================
 BOT_TOKEN = "8534138943:AAHvIRzDybgZz8Vu2AA935BSvDzsXT4TDR0"
 TARGET_CHANNEL = -1003651634734
 BRAND_NAME = "𝐋𝐄𝐀𝐃𝐄𝐑 𝐀𝐊𝐀𝐒𝐇 𝐕𝐈𝐏™"
 CHANNEL_LINK = "https://t.me/N_JCOMMUNITY"
+BOT_PASSWORD = "2222"
 
-# ================= STICKER DATABASE =================
+# ================= LOGGING =================
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# ================= STICKERS =================
 STICKERS = {
     'BIG_PRED': "CAACAgUAAxkBAAEQTr5pcwrBGAZ5xLp_AUAFWSiWiS0rOwAC4R0AAg7MoFcKItGd1m2CsjgE",
     'SMALL_PRED': "CAACAgUAAxkBAAEQTr9pcwrC7iH-Ei5xHz2QapE-DFkgLQACXxkAAoNWmFeTSY6h7y7VlzgE",
@@ -43,121 +46,75 @@ STICKERS = {
 }
 
 # ================= API LINKS =================
-
 API_1M = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json"
 API_30S = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json"
 
-# ================= FLASK SERVER =================
-
+# ================= FLASK SERVER (MARUF STYLE) =================
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "NEURAL MATRIX 5.0 RUNNING..."
+    return f"{BRAND_NAME} IS RUNNING..."
 
 def run_http():
     port = int(os.environ.get("PORT", 8080))
     try:
         app.run(host='0.0.0.0', port=port)
-    except Exception:
-        pass
+    except: pass
 
-def keep_alive():
-    t = Thread(target=run_http)
-    t.daemon = True
-    t.start()
-
-# ================= NEURAL MATRIX 5.0 LOGIC =================
-
+# ================= ENGINE LOGIC =================
 class PredictionEngine:
     def __init__(self):
-        self.history = []        # ["BIG","SMALL",...]
-        self.raw_history = []    # full issue dicts
-        self.last_prediction = None # গতবার কি দিয়েছিলাম তা মনে রাখবে
+        self.history = []
+        self.raw_history = []
+        self.last_prediction = None
 
     def update_history(self, issue_data):
         try:
             number = int(issue_data['number'])
             result_type = "BIG" if number >= 5 else "SMALL"
-        except Exception:
-            return
+            
+            if not self.history or self.raw_history[0]['issueNumber'] != issue_data['issueNumber']:
+                self.history.insert(0, result_type)
+                self.raw_history.insert(0, issue_data)
+                self.history = self.history[:50]
+                self.raw_history = self.raw_history[:50]
+        except: pass
 
-        if (not self.raw_history) or (self.raw_history[0].get('issueNumber') != issue_data.get('issueNumber')):
-            self.history.insert(0, result_type)
-            self.raw_history.insert(0, issue_data)
-            self.history = self.history[:50]
-            self.raw_history = self.raw_history[:50]
-
-    def get_pattern_signal(self, current_streak_loss: int):
-        # ✅ লজিক শুরু: ডাটা কম থাকলে র‍্যান্ডম
-        if len(self.history) < 12:
+    def get_pattern_signal(self, current_streak_loss):
+        if len(self.history) < 6:
             return random.choice(["BIG", "SMALL"])
-
-        last_10 = self.history[:10]
+            
+        last_6 = self.history[:6]
         prediction = None
-        
-        # 🔥 LEVEL 1: ANTI-TRAP SYSTEM (সবচেয়ে গুরুত্বপূর্ণ)
-        # যদি পরপর ২ বার লস হয়, তাহলে আগের লজিকের উল্টোটা দিবে।
+
+        # Anti-Trap Logic (Maruf Style)
         if current_streak_loss >= 2:
-            # যদি গতবার BIG দিয়ে লস হয়, এবার SMALL দিবে (Inverse)
-            if self.last_prediction == "BIG":
-                prediction = "SMALL"
-            elif self.last_prediction == "SMALL":
-                prediction = "BIG"
-            else:
-                # যদি গত ডাটা না থাকে, জিগজ্যাগ ফলো করবে
-                prediction = "SMALL" if last_10[0] == "BIG" else "BIG"
-            
-            self.last_prediction = prediction
-            return prediction
+             if self.last_prediction == "BIG": prediction = "SMALL"
+             elif self.last_prediction == "SMALL": prediction = "BIG"
+             else: prediction = random.choice(["BIG", "SMALL"])
+             self.last_prediction = prediction
+             return prediction
 
-        # 🔥 LEVEL 2: ADVANCED PATTERN RECOGNITION
-        
-        # 1. Strong Dragon (টানা ৪+ বার একই)
-        if last_10[0] == last_10[1] == last_10[2] == last_10[3]:
-            prediction = last_10[0] # ড্রাগন ধরবে
-            
-        # 2. Perfect ZigZag (B S B S B)
-        elif (last_10[0] != last_10[1]) and (last_10[1] != last_10[2]) and (last_10[2] != last_10[3]):
-            prediction = "SMALL" if last_10[0] == "BIG" else "BIG"
-
-        # 3. Double Flip (BB SS BB)
-        elif last_10[0] == last_10[1] and last_10[2] == last_10[3] and last_10[1] != last_10[2]:
-             prediction = "SMALL" if last_10[0] == "BIG" else "BIG" # ফ্লিপ করবে
-             
-        # 🔥 LEVEL 3: NUMBER DECRYPTION (Math)
+        # 1. Dragon Pattern
+        if last_6[0] == last_6[1] == last_6[2]:
+            prediction = last_6[0]
+        # 2. ZigZag
+        elif last_6[0] != last_6[1] and last_6[1] != last_6[2]:
+            prediction = "SMALL" if last_6[0] == "BIG" else "BIG"
         else:
-            try:
-                # শেষের ২টা সংখ্যার যোগফলের উপর ভিত্তি করে
-                n1 = int(self.raw_history[0]['number'])
-                n2 = int(self.raw_history[1]['number'])
-                total = n1 + n2
-                
-                # লজিক: জোড় হলে BIG, বিজোড় হলে SMALL (কিন্তু ৭ এর গুণিতক হলে উল্টো)
-                if total % 2 == 0:
-                    prediction = "SMALL" if total > 12 else "BIG"
-                else:
-                    prediction = "BIG" if total < 7 else "SMALL"
-            except:
-                prediction = random.choice(["BIG", "SMALL"])
-
+            prediction = random.choice(["BIG", "SMALL"])
+        
         self.last_prediction = prediction
         return prediction
 
     def calculate_confidence(self):
-        # কনফিডেন্স একটু বাড়িয়ে দেওয়া হলো ইউজারদের জন্য
-        base = random.randint(88, 93)
-        # ড্রাগন চললে কনফিডেন্স বেশি দেখাবে
-        if len(self.history) >= 3 and self.history[0] == self.history[1] == self.history[2]:
-            base += random.randint(3, 6)
-        return min(base, 100) # ১০০ এর বেশি হবে না
+        return random.randint(90, 99)
 
-# ================= BOT STATE (ANTI-DUPLICATE) =================
-
+# ================= BOT STATE =================
 class BotState:
     def __init__(self):
         self.is_running = False
-        self.session_id = 0
         self.game_mode = '1M'
         self.engine = PredictionEngine()
         self.active_bet = None
@@ -166,45 +123,45 @@ class BotState:
 
 state = BotState()
 
-# ================= API FETCH (TURBO + PROXY) =================
-
-async def fetch_latest_issue(mode):
+# ================= API FETCH (DK MARUF PROXY SYSTEM) =================
+# এই ফাংশনটি মারুফের বটের মতো শক্তিশালী, সহজে ব্লক খাবে না
+def fetch_latest_issue(mode):
     base_url = API_1M if mode == '1M' else API_30S
-    request_timeout = 4.0 if mode == '30S' else 10.0
+    timestamp = int(time.time() * 1000)
     
-    gateways = [
-        f"{base_url}?t={int(time.time()*1000)}", 
-        f"https://corsproxy.io/?{base_url}?t={int(time.time()*1000)}",
-        f"https://api.allorigins.win/raw?url={base_url}"
+    # মারুফের শক্তিশালী প্রক্সি লিস্ট
+    proxies = [
+        f"{base_url}?t={timestamp}",
+        f"https://corsproxy.io/?{base_url}?t={timestamp}",
+        f"https://api.allorigins.win/raw?url={base_url}",
+        f"https://thingproxy.freeboard.io/fetch/{base_url}",
+        f"https://api.codetabs.com/v1/proxy?quest={base_url}"
     ]
 
     headers = {
-        "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/{random.randint(100, 120)}.0.0.0 Safari/537.36",
         "Referer": "https://dkwin9.com/"
     }
 
-    async with httpx.AsyncClient(timeout=request_timeout, follow_redirects=True) as client:
-        for url in gateways:
-            try:
-                response = await client.get(url, headers=headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data and "data" in data and "list" in data["data"]:
-                        return data["data"]["list"][0]
-            except Exception:
-                continue
+    for url in proxies:
+        try:
+            # Using requests (Blocking but reliable for this logic)
+            response = requests.get(url, headers=headers, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                if data and "data" in data and "list" in data["data"]:
+                    return data["data"]["list"][0]
+        except:
+            continue
     return None
 
 # ================= FORMATTING =================
-
 def format_signal(issue, prediction, conf, streak_loss):
     emoji = "🟢" if prediction == "BIG" else "🔴"
     lvl = streak_loss + 1
-    
-    # ৩ গুণের বদলে ২ গুণ বা রিকভারি লজিক
     multiplier = "1X"
     if lvl == 2: multiplier = "3X"
-    if lvl == 3: multiplier = "8X" # ৩য় ধাপে রিকভারি
+    if lvl == 3: multiplier = "8X"
     if lvl > 3: multiplier = "🔥 MAX"
 
     plan_text = f"Bet: {multiplier}"
@@ -248,62 +205,50 @@ def format_result(issue, res_num, res_type, my_pick, is_win):
     )
 
 def format_fake_summary():
-    real_wins = state.stats['wins']
-    real_losses = state.stats['losses']
-    fake_wins = real_wins + random.randint(15, 25)
-    total = fake_wins
-    accuracy = 100
+    fake_wins = state.stats['wins'] + random.randint(10, 20)
     join_line = f"\n🔗 <a href='{CHANNEL_LINK}'><b>JOIN NEXT SESSION</b></a>" if CHANNEL_LINK else ""
-
     return (
         f"🛑 <b>SESSION CLOSED</b> 🛑\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"👑 <b>{BRAND_NAME}</b>\n"
-        f"📊 <b>FINAL REPORT:</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
         f"🏆 <b>TOTAL WIN:</b> {fake_wins} ✅\n"
         f"🗑 <b>TOTAL LOSS:</b> 0 ❌\n"
-        f"🎯 <b>ACCURACY:</b> {accuracy}% 🔥\n"
+        f"🎯 <b>ACCURACY:</b> 100% 🔥\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"🤑 <b>PROFIT:</b> MAX LEVEL"
         f"{join_line}"
     )
 
 # ================= AUTH =================
-
 AUTHORIZED_USERS = set()
-BOT_PASSWORD = "2222"
 
-# ================= ENGINE =================
-
-async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
-    print(f"🚀 NEURAL MATRIX Engine Started (Session: {my_session_id})...")
-    fail_count = 0
+# ================= ENGINE LOOP (ASYNC WRAPPER) =================
+async def game_engine(context: ContextTypes.DEFAULT_TYPE):
+    logger.info("🚀 AKASH ENGINE STARTED...")
     
-    while state.is_running:
-        if state.session_id != my_session_id:
-            return
+    # Initial Message
+    try: await context.bot.send_message(TARGET_CHANNEL, "🔄 <b>Connecting to Server...</b>", parse_mode=ParseMode.HTML)
+    except: pass
 
+    while state.is_running:
         try:
-            latest = await fetch_latest_issue(state.game_mode)
+            # Using ThreadPool to run blocking requests in async loop (Maruf Trick)
+            latest = await asyncio.to_thread(fetch_latest_issue, state.game_mode)
             
             if not latest:
-                fail_count += 1
-                wait_time = 2 if state.game_mode == '30S' else 4
-                await asyncio.sleep(wait_time)
+                await asyncio.sleep(3)
                 continue
             
-            fail_count = 0
             latest_issue = latest['issueNumber']
             latest_num = latest['number']
             latest_type = "BIG" if int(latest_num) >= 5 else "SMALL"
             next_issue = str(int(latest_issue) + 1)
 
-            # Result Check
+            # --- Result Logic ---
             if state.active_bet and state.active_bet['period'] == latest_issue:
                 if state.last_period_processed == latest_issue:
-                     await asyncio.sleep(1)
-                     continue
+                    await asyncio.sleep(1)
+                    continue
 
                 pick = state.active_bet['pick']
                 is_win = (pick == latest_type)
@@ -314,12 +259,11 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
                     state.stats['streak_win'] += 1
                     state.stats['streak_loss'] = 0
                     streak = state.stats['streak_win']
-                    
                     if streak in STICKERS['STREAK_WINS']:
                         try: await context.bot.send_sticker(TARGET_CHANNEL, STICKERS['STREAK_WINS'][streak])
                         except: pass
                     else:
-                        try: await context.bot.send_sticker(TARGET_CHANNEL, STICKERS['WIN_BIG'] if latest_type == "BIG" else STICKERS['WIN_SMALL'])
+                        try: await context.bot.send_sticker(TARGET_CHANNEL, STICKERS['WIN_BIG'] if latest_type=="BIG" else STICKERS['WIN_SMALL'])
                         except: pass
                 else:
                     state.stats['losses'] += 1
@@ -327,7 +271,8 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
                     state.stats['streak_loss'] += 1
                     try: await context.bot.send_sticker(TARGET_CHANNEL, random.choice(STICKERS['LOSS']))
                     except: pass
-
+                
+                # Send Result
                 try:
                     await context.bot.send_message(
                         TARGET_CHANNEL,
@@ -340,23 +285,22 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
                 state.active_bet = None
                 state.last_period_processed = latest_issue
 
-            # Signal Sending
+            # --- Signal Logic ---
             if not state.active_bet and state.last_period_processed != next_issue:
-                buffer_time = 1 if state.game_mode == '30S' else 2
-                await asyncio.sleep(buffer_time)
-                
-                if state.session_id != my_session_id: return
-
+                await asyncio.sleep(2)
                 state.engine.update_history(latest)
+                
                 pred = state.engine.get_pattern_signal(state.stats['streak_loss'])
                 conf = state.engine.calculate_confidence()
-
+                
                 state.active_bet = {"period": next_issue, "pick": pred}
-
+                
+                # Send Sticker
                 s_stk = STICKERS['BIG_PRED'] if pred == "BIG" else STICKERS['SMALL_PRED']
                 try: await context.bot.send_sticker(TARGET_CHANNEL, s_stk)
                 except: pass
-
+                
+                # Send Signal
                 try:
                     await context.bot.send_message(
                         TARGET_CHANNEL,
@@ -366,13 +310,19 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
                     )
                 except: pass
 
-            loop_sleep = 1 if state.game_mode == '30S' else 2
-            await asyncio.sleep(loop_sleep)
-
-        except Exception:
+            await asyncio.sleep(2)
+            
+        except Exception as e:
+            print(f"Loop Error: {e}")
             await asyncio.sleep(2)
 
 # ================= HANDLERS =================
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id in AUTHORIZED_USERS:
+        await show_main_menu(update)
+    else:
+        await update.message.reply_text("🔒 <b>System Locked!</b>\nEnter Password:", parse_mode=ParseMode.HTML)
 
 async def show_main_menu(update: Update):
     await update.message.reply_text(
@@ -383,13 +333,6 @@ async def show_main_menu(update: Update):
         ),
         parse_mode=ParseMode.HTML
     )
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id in AUTHORIZED_USERS:
-        await show_main_menu(update)
-    else:
-        await update.message.reply_text("🔒 <b>System Locked!</b>\nEnter Password:", parse_mode=ParseMode.HTML)
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (update.message.text or "").strip()
@@ -403,41 +346,43 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ <b>Wrong Password!</b>", parse_mode=ParseMode.HTML)
         return
 
-    if "Stop" in msg or msg == "/off":
-        state.session_id += 1 
+    if "Stop" in msg or "/off" in msg:
         state.is_running = False
         await update.message.reply_text("🛑 Stopping...", parse_mode=ParseMode.HTML)
-        try:
-            await context.bot.send_message(TARGET_CHANNEL, format_fake_summary(), parse_mode=ParseMode.HTML)
+        try: await context.bot.send_message(TARGET_CHANNEL, format_fake_summary(), parse_mode=ParseMode.HTML)
         except: pass
         return
 
     if "Connect" in msg:
-        state.session_id += 1
-        current_session = state.session_id
-        
+        if state.is_running:
+            await update.message.reply_text("⚠️ Already Running!")
+            return
+            
         mode = '1M' if '1M' in msg else '30S'
         state.game_mode = mode
         state.is_running = True
-        state.stats = {"wins": 0, "losses": 0, "streak_win": 0, "streak_loss": 0}
+        state.stats = {"wins":0, "losses":0, "streak_win":0, "streak_loss":0}
         state.engine = PredictionEngine()
 
         await update.message.reply_text(f"✅ <b>Connected to {mode}</b>", reply_markup=ReplyKeyboardRemove(), parse_mode=ParseMode.HTML)
         try: await context.bot.send_sticker(TARGET_CHANNEL, STICKERS['START'])
         except: pass
         
-        context.application.create_task(game_engine(context, current_session))
+        # Start Engine in Background
+        context.application.create_task(game_engine(context))
 
 # ================= MAIN =================
-
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    keep_alive()
+    # Flask Server Thread
+    flask_thread = Thread(target=run_http)
+    flask_thread.start()
 
-    app_telegram = Application.builder().token(BOT_TOKEN).build()
-    app_telegram.add_handler(CommandHandler("start", start))
-    app_telegram.add_handler(CommandHandler("off", handle_message))
-    app_telegram.add_handler(MessageHandler(filters.TEXT, handle_message))
-
-    print(f"{BRAND_NAME} NEURAL MATRIX LIVE...")
-    app_telegram.run_polling()
+    # Telegram Bot Start
+    print(f"♻️ {BRAND_NAME} STARTED ON CLOUD...")
+    app = Application.builder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("off", handle_message))
+    app.add_handler(MessageHandler(filters.TEXT, handle_message))
+    
+    # Critical Fix for Python 3.13 / PTB 21.x
+    app.run_polling(allowed_updates=Update.ALL_TYPES, close_loop=False)
