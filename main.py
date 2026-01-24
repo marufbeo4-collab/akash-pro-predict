@@ -10,7 +10,7 @@ from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 from flask import Flask
 
-# ================= CONFIGURATION (LEADER AKASH VIP) =================
+# ================= CONFIGURATION =================
 
 BOT_TOKEN = "8534138943:AAHvIRzDybgZz8Vu2AA935BSvDzsXT4TDR0"
 TARGET_CHANNEL = -1003651634734
@@ -53,7 +53,7 @@ app = Flask('')
 
 @app.route('/')
 def home():
-    return "LEADER AKASH VIP BOT RUNNING..."
+    return "LEADER AKASH TURBO BOT RUNNING..."
 
 def run_http():
     port = int(os.environ.get("PORT", 8080))
@@ -94,13 +94,11 @@ class PredictionEngine:
         last_6 = self.history[:6]
         prediction = None
 
-        # Pattern Analysis
         if len(last_6) >= 3 and last_6[0] == last_6[1] == last_6[2]:
-            prediction = last_6[0] # Dragon
+            prediction = last_6[0] 
         elif len(last_6) >= 3 and (last_6[0] != last_6[1] and last_6[1] != last_6[2]):
-            prediction = "SMALL" if last_6[0] == "BIG" else "BIG" # Zigzag
+            prediction = "SMALL" if last_6[0] == "BIG" else "BIG" 
         else:
-            # Math Fallback
             try:
                 last_num = int(self.raw_history[0]['number'])
                 period = int(str(self.raw_history[0]['issueNumber'])[-1])
@@ -109,7 +107,6 @@ class PredictionEngine:
             except:
                 prediction = random.choice(["BIG", "SMALL"])
 
-        # Anti-Trap Logic
         if int(current_streak_loss) >= 2:
             return "SMALL" if prediction == "BIG" else "BIG"
 
@@ -122,11 +119,12 @@ class PredictionEngine:
         except: pass
         return random.randint(85, 92)
 
-# ================= BOT STATE =================
+# ================= BOT STATE (ANTI-DUPLICATE SYSTEM) =================
 
 class BotState:
     def __init__(self):
         self.is_running = False
+        self.session_id = 0  # <--- Unique ID check
         self.game_mode = '1M'
         self.engine = PredictionEngine()
         self.active_bet = None
@@ -135,21 +133,19 @@ class BotState:
 
 state = BotState()
 
-# ================= API FETCH (ANTI-BLOCK PROXY SYSTEM) =================
+# ================= API FETCH (TURBO MODE) =================
 
 async def fetch_latest_issue(mode):
-    """
-    Uses 5 different gateways to bypass blocking
-    """
     base_url = API_1M if mode == '1M' else API_30S
     
-    # List of gateways to try
+    # 30S needs super fast timeout
+    request_timeout = 4.0 if mode == '30S' else 10.0
+    
     gateways = [
-        f"{base_url}?t={int(time.time()*1000)}", # Direct
-        f"https://corsproxy.io/?{base_url}?t={int(time.time()*1000)}", # Proxy 1
-        f"https://api.allorigins.win/raw?url={base_url}", # Proxy 2
-        f"https://thingproxy.freeboard.io/fetch/{base_url}", # Proxy 3
-        f"https://api.codetabs.com/v1/proxy?quest={base_url}" # Proxy 4
+        f"{base_url}?t={int(time.time()*1000)}", 
+        f"https://api.codetabs.com/v1/proxy?quest={base_url}",
+        f"https://corsproxy.io/?{base_url}?t={int(time.time()*1000)}", 
+        f"https://api.allorigins.win/raw?url={base_url}"
     ]
 
     headers = {
@@ -158,19 +154,16 @@ async def fetch_latest_issue(mode):
         "Accept": "application/json"
     }
 
-    async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=request_timeout, follow_redirects=True) as client:
         for url in gateways:
             try:
                 response = await client.get(url, headers=headers)
                 if response.status_code == 200:
                     data = response.json()
-                    # Check structure
                     if data and "data" in data and "list" in data["data"]:
                         return data["data"]["list"][0]
             except Exception:
-                # Just fail silently and try next proxy
                 continue
-    
     return None
 
 # ================= FORMATTING =================
@@ -179,7 +172,6 @@ def format_signal(issue, prediction, conf, streak_loss):
     emoji = "🟢" if prediction == "BIG" else "🔴"
     lvl = streak_loss + 1
     multiplier = 3 ** (lvl - 1)
-    
     plan_text = "Start (1X)"
     if lvl > 1: plan_text = f"⚠️ Recovery Step {lvl} ({multiplier}X)"
     if lvl > 4: plan_text = f"🔥 DO OR DIE ({multiplier}X)"
@@ -249,29 +241,29 @@ def format_fake_summary():
 AUTHORIZED_USERS = set()
 BOT_PASSWORD = "2222"
 
-# ================= ENGINE =================
+# ================= ENGINE (SINGLE THREAD PROTECTED) =================
 
-async def game_engine(context: ContextTypes.DEFAULT_TYPE):
-    print("🚀 LEADER AKASH Engine Started...")
+async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
+    print(f"🚀 LEADER AKASH Engine Started (Session: {my_session_id})...")
     
     fail_count = 0
     
     while state.is_running:
+        # 🔴 KILL OLD SESSIONS
+        if state.session_id != my_session_id:
+            print(f"🛑 Killing Old Session {my_session_id}...")
+            return
+
         try:
-            # Step 1: Fetch
             latest = await fetch_latest_issue(state.game_mode)
             
             if not latest:
                 fail_count += 1
-                print(f"⚠️ API Fetch Failed ({fail_count})")
-                
-                if fail_count > 10:
-                    fail_count = 0 
-                
-                await asyncio.sleep(4)
+                # Turbo Retry for 30S
+                wait_time = 2 if state.game_mode == '30S' else 4
+                await asyncio.sleep(wait_time)
                 continue
             
-            # Reset fail count if successful
             fail_count = 0
 
             latest_issue = latest['issueNumber']
@@ -281,6 +273,11 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE):
 
             # Step 2: Result
             if state.active_bet and state.active_bet['period'] == latest_issue:
+                # Double check to prevent duplicate messages
+                if state.last_period_processed == latest_issue:
+                     await asyncio.sleep(1)
+                     continue
+
                 pick = state.active_bet['pick']
                 is_win = (pick == latest_type)
                 state.engine.update_history(latest)
@@ -318,8 +315,11 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE):
 
             # Step 3: Signal
             if not state.active_bet and state.last_period_processed != next_issue:
-                # Wait a bit to ensure stability
-                await asyncio.sleep(2)
+                # Turbo Buffer for 30S
+                buffer_time = 1 if state.game_mode == '30S' else 2
+                await asyncio.sleep(buffer_time)
+                
+                if state.session_id != my_session_id: return
 
                 state.engine.update_history(latest)
                 pred = state.engine.get_pattern_signal(state.stats['streak_loss'])
@@ -340,11 +340,13 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE):
                     )
                 except: pass
 
-            await asyncio.sleep(2)
+            # Turbo Loop Sleep
+            loop_sleep = 1 if state.game_mode == '30S' else 2
+            await asyncio.sleep(loop_sleep)
 
         except Exception as e:
             print(f"Loop Error: {e}")
-            await asyncio.sleep(5)
+            await asyncio.sleep(2)
 
 # ================= HANDLERS =================
 
@@ -378,7 +380,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if "Stop" in msg or msg == "/off":
+        state.session_id += 1 
         state.is_running = False
+        
         await update.message.reply_text("🛑 Stopping...", parse_mode=ParseMode.HTML)
         try:
             await context.bot.send_message(
@@ -391,10 +395,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if "Connect" in msg:
-        if state.is_running:
-            await update.message.reply_text("⚠️ Already Running!", parse_mode=ParseMode.HTML)
-            return
-
+        state.session_id += 1
+        current_session = state.session_id
+        
         mode = '1M' if '1M' in msg else '30S'
         state.game_mode = mode
         state.is_running = True
@@ -405,7 +408,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try: await context.bot.send_sticker(TARGET_CHANNEL, STICKERS['START'])
         except: pass
         
-        context.application.create_task(game_engine(context))
+        context.application.create_task(game_engine(context, current_session))
 
 # ================= MAIN =================
 
@@ -418,5 +421,5 @@ if __name__ == '__main__':
     app_telegram.add_handler(CommandHandler("off", handle_message))
     app_telegram.add_handler(MessageHandler(filters.TEXT, handle_message))
 
-    print(f"{BRAND_NAME} PRO LIVE...")
+    print(f"{BRAND_NAME} FINAL LIVE...")
     app_telegram.run_polling()
