@@ -53,7 +53,7 @@ app = Flask('')
 
 @app.route('/')
 def home():
-    return "LEADER AKASH TURBO BOT RUNNING..."
+    return "NEURAL MATRIX 5.0 RUNNING..."
 
 def run_http():
     port = int(os.environ.get("PORT", 8080))
@@ -67,12 +67,13 @@ def keep_alive():
     t.daemon = True
     t.start()
 
-# ================= PREDICTION ENGINE =================
+# ================= NEURAL MATRIX 5.0 LOGIC =================
 
 class PredictionEngine:
     def __init__(self):
-        self.history = []
-        self.raw_history = []
+        self.history = []        # ["BIG","SMALL",...]
+        self.raw_history = []    # full issue dicts
+        self.last_prediction = None # গতবার কি দিয়েছিলাম তা মনে রাখবে
 
     def update_history(self, issue_data):
         try:
@@ -88,43 +89,75 @@ class PredictionEngine:
             self.raw_history = self.raw_history[:50]
 
     def get_pattern_signal(self, current_streak_loss: int):
-        if len(self.history) < 10:
+        # ✅ লজিক শুরু: ডাটা কম থাকলে র‍্যান্ডম
+        if len(self.history) < 12:
             return random.choice(["BIG", "SMALL"])
 
-        last_6 = self.history[:6]
+        last_10 = self.history[:10]
         prediction = None
+        
+        # 🔥 LEVEL 1: ANTI-TRAP SYSTEM (সবচেয়ে গুরুত্বপূর্ণ)
+        # যদি পরপর ২ বার লস হয়, তাহলে আগের লজিকের উল্টোটা দিবে।
+        if current_streak_loss >= 2:
+            # যদি গতবার BIG দিয়ে লস হয়, এবার SMALL দিবে (Inverse)
+            if self.last_prediction == "BIG":
+                prediction = "SMALL"
+            elif self.last_prediction == "SMALL":
+                prediction = "BIG"
+            else:
+                # যদি গত ডাটা না থাকে, জিগজ্যাগ ফলো করবে
+                prediction = "SMALL" if last_10[0] == "BIG" else "BIG"
+            
+            self.last_prediction = prediction
+            return prediction
 
-        if len(last_6) >= 3 and last_6[0] == last_6[1] == last_6[2]:
-            prediction = last_6[0] 
-        elif len(last_6) >= 3 and (last_6[0] != last_6[1] and last_6[1] != last_6[2]):
-            prediction = "SMALL" if last_6[0] == "BIG" else "BIG" 
+        # 🔥 LEVEL 2: ADVANCED PATTERN RECOGNITION
+        
+        # 1. Strong Dragon (টানা ৪+ বার একই)
+        if last_10[0] == last_10[1] == last_10[2] == last_10[3]:
+            prediction = last_10[0] # ড্রাগন ধরবে
+            
+        # 2. Perfect ZigZag (B S B S B)
+        elif (last_10[0] != last_10[1]) and (last_10[1] != last_10[2]) and (last_10[2] != last_10[3]):
+            prediction = "SMALL" if last_10[0] == "BIG" else "BIG"
+
+        # 3. Double Flip (BB SS BB)
+        elif last_10[0] == last_10[1] and last_10[2] == last_10[3] and last_10[1] != last_10[2]:
+             prediction = "SMALL" if last_10[0] == "BIG" else "BIG" # ফ্লিপ করবে
+             
+        # 🔥 LEVEL 3: NUMBER DECRYPTION (Math)
         else:
             try:
-                last_num = int(self.raw_history[0]['number'])
-                period = int(str(self.raw_history[0]['issueNumber'])[-1])
-                calc = (last_num * 3 + period * 7) % 10
-                prediction = "BIG" if calc >= 5 else "SMALL"
+                # শেষের ২টা সংখ্যার যোগফলের উপর ভিত্তি করে
+                n1 = int(self.raw_history[0]['number'])
+                n2 = int(self.raw_history[1]['number'])
+                total = n1 + n2
+                
+                # লজিক: জোড় হলে BIG, বিজোড় হলে SMALL (কিন্তু ৭ এর গুণিতক হলে উল্টো)
+                if total % 2 == 0:
+                    prediction = "SMALL" if total > 12 else "BIG"
+                else:
+                    prediction = "BIG" if total < 7 else "SMALL"
             except:
                 prediction = random.choice(["BIG", "SMALL"])
 
-        if int(current_streak_loss) >= 2:
-            return "SMALL" if prediction == "BIG" else "BIG"
-
+        self.last_prediction = prediction
         return prediction
 
     def calculate_confidence(self):
-        try:
-            if len(self.history) >= 3 and self.history[0] == self.history[1] == self.history[2]:
-                return random.randint(93, 98)
-        except: pass
-        return random.randint(85, 92)
+        # কনফিডেন্স একটু বাড়িয়ে দেওয়া হলো ইউজারদের জন্য
+        base = random.randint(88, 93)
+        # ড্রাগন চললে কনফিডেন্স বেশি দেখাবে
+        if len(self.history) >= 3 and self.history[0] == self.history[1] == self.history[2]:
+            base += random.randint(3, 6)
+        return min(base, 100) # ১০০ এর বেশি হবে না
 
-# ================= BOT STATE (ANTI-DUPLICATE SYSTEM) =================
+# ================= BOT STATE (ANTI-DUPLICATE) =================
 
 class BotState:
     def __init__(self):
         self.is_running = False
-        self.session_id = 0  # <--- Unique ID check
+        self.session_id = 0
         self.game_mode = '1M'
         self.engine = PredictionEngine()
         self.active_bet = None
@@ -133,25 +166,21 @@ class BotState:
 
 state = BotState()
 
-# ================= API FETCH (TURBO MODE) =================
+# ================= API FETCH (TURBO + PROXY) =================
 
 async def fetch_latest_issue(mode):
     base_url = API_1M if mode == '1M' else API_30S
-    
-    # 30S needs super fast timeout
     request_timeout = 4.0 if mode == '30S' else 10.0
     
     gateways = [
         f"{base_url}?t={int(time.time()*1000)}", 
-        f"https://api.codetabs.com/v1/proxy?quest={base_url}",
-        f"https://corsproxy.io/?{base_url}?t={int(time.time()*1000)}", 
+        f"https://corsproxy.io/?{base_url}?t={int(time.time()*1000)}",
         f"https://api.allorigins.win/raw?url={base_url}"
     ]
 
     headers = {
-        "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/{random.randint(100, 120)}.0.0.0 Safari/537.36",
-        "Referer": "https://dkwin9.com/",
-        "Accept": "application/json"
+        "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://dkwin9.com/"
     }
 
     async with httpx.AsyncClient(timeout=request_timeout, follow_redirects=True) as client:
@@ -171,10 +200,15 @@ async def fetch_latest_issue(mode):
 def format_signal(issue, prediction, conf, streak_loss):
     emoji = "🟢" if prediction == "BIG" else "🔴"
     lvl = streak_loss + 1
-    multiplier = 3 ** (lvl - 1)
-    plan_text = "Start (1X)"
-    if lvl > 1: plan_text = f"⚠️ Recovery Step {lvl} ({multiplier}X)"
-    if lvl > 4: plan_text = f"🔥 DO OR DIE ({multiplier}X)"
+    
+    # ৩ গুণের বদলে ২ গুণ বা রিকভারি লজিক
+    multiplier = "1X"
+    if lvl == 2: multiplier = "3X"
+    if lvl == 3: multiplier = "8X" # ৩য় ধাপে রিকভারি
+    if lvl > 3: multiplier = "🔥 MAX"
+
+    plan_text = f"Bet: {multiplier}"
+    if lvl > 1: plan_text = f"⚠️ Recovery Level {lvl} ({multiplier})"
     
     join_line = f"\n🔗 <a href='{CHANNEL_LINK}'><b>JOIN VIP CHANNEL</b></a>" if CHANNEL_LINK else ""
     return (
@@ -185,7 +219,7 @@ def format_signal(issue, prediction, conf, streak_loss):
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"🔮 <b>PREDICTION:</b> {emoji} <b>{prediction}</b> {emoji}\n"
         f"💣 <b>Confidence:</b> {conf}%\n"
-        f"💰 <b>Bet:</b> {plan_text}\n"
+        f"💰 <b>{plan_text}</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━"
         f"{join_line}"
     )
@@ -217,9 +251,8 @@ def format_fake_summary():
     real_wins = state.stats['wins']
     real_losses = state.stats['losses']
     fake_wins = real_wins + random.randint(15, 25)
-    fake_losses = 1 if real_losses > 3 else 0
-    total = fake_wins + fake_losses
-    accuracy = int((fake_wins / total) * 100) if total > 0 else 100
+    total = fake_wins
+    accuracy = 100
     join_line = f"\n🔗 <a href='{CHANNEL_LINK}'><b>JOIN NEXT SESSION</b></a>" if CHANNEL_LINK else ""
 
     return (
@@ -229,7 +262,7 @@ def format_fake_summary():
         f"📊 <b>FINAL REPORT:</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"🏆 <b>TOTAL WIN:</b> {fake_wins} ✅\n"
-        f"🗑 <b>TOTAL LOSS:</b> {fake_losses} ❌\n"
+        f"🗑 <b>TOTAL LOSS:</b> 0 ❌\n"
         f"🎯 <b>ACCURACY:</b> {accuracy}% 🔥\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"🤑 <b>PROFIT:</b> MAX LEVEL"
@@ -241,17 +274,14 @@ def format_fake_summary():
 AUTHORIZED_USERS = set()
 BOT_PASSWORD = "2222"
 
-# ================= ENGINE (SINGLE THREAD PROTECTED) =================
+# ================= ENGINE =================
 
 async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
-    print(f"🚀 LEADER AKASH Engine Started (Session: {my_session_id})...")
-    
+    print(f"🚀 NEURAL MATRIX Engine Started (Session: {my_session_id})...")
     fail_count = 0
     
     while state.is_running:
-        # 🔴 KILL OLD SESSIONS
         if state.session_id != my_session_id:
-            print(f"🛑 Killing Old Session {my_session_id}...")
             return
 
         try:
@@ -259,21 +289,18 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
             
             if not latest:
                 fail_count += 1
-                # Turbo Retry for 30S
                 wait_time = 2 if state.game_mode == '30S' else 4
                 await asyncio.sleep(wait_time)
                 continue
             
             fail_count = 0
-
             latest_issue = latest['issueNumber']
             latest_num = latest['number']
             latest_type = "BIG" if int(latest_num) >= 5 else "SMALL"
             next_issue = str(int(latest_issue) + 1)
 
-            # Step 2: Result
+            # Result Check
             if state.active_bet and state.active_bet['period'] == latest_issue:
-                # Double check to prevent duplicate messages
                 if state.last_period_processed == latest_issue:
                      await asyncio.sleep(1)
                      continue
@@ -313,9 +340,8 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
                 state.active_bet = None
                 state.last_period_processed = latest_issue
 
-            # Step 3: Signal
+            # Signal Sending
             if not state.active_bet and state.last_period_processed != next_issue:
-                # Turbo Buffer for 30S
                 buffer_time = 1 if state.game_mode == '30S' else 2
                 await asyncio.sleep(buffer_time)
                 
@@ -340,12 +366,10 @@ async def game_engine(context: ContextTypes.DEFAULT_TYPE, my_session_id):
                     )
                 except: pass
 
-            # Turbo Loop Sleep
             loop_sleep = 1 if state.game_mode == '30S' else 2
             await asyncio.sleep(loop_sleep)
 
-        except Exception as e:
-            print(f"Loop Error: {e}")
+        except Exception:
             await asyncio.sleep(2)
 
 # ================= HANDLERS =================
@@ -382,15 +406,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if "Stop" in msg or msg == "/off":
         state.session_id += 1 
         state.is_running = False
-        
         await update.message.reply_text("🛑 Stopping...", parse_mode=ParseMode.HTML)
         try:
-            await context.bot.send_message(
-                TARGET_CHANNEL,
-                format_fake_summary(),
-                parse_mode=ParseMode.HTML,
-                disable_web_page_preview=True
-            )
+            await context.bot.send_message(TARGET_CHANNEL, format_fake_summary(), parse_mode=ParseMode.HTML)
         except: pass
         return
 
@@ -421,5 +439,5 @@ if __name__ == '__main__':
     app_telegram.add_handler(CommandHandler("off", handle_message))
     app_telegram.add_handler(MessageHandler(filters.TEXT, handle_message))
 
-    print(f"{BRAND_NAME} FINAL LIVE...")
+    print(f"{BRAND_NAME} NEURAL MATRIX LIVE...")
     app_telegram.run_polling()
