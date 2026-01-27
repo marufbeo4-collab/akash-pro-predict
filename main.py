@@ -134,7 +134,7 @@ async def get_live_password() -> str:
     return await asyncio.to_thread(fetch_password_a1)
 
 # =========================
-# PREDICTION ENGINE (ZIGZAG + DRAGON MASTER)  ✅ YOUR CODE
+# PREDICTION ENGINE (ZIGZAG DETECTOR + TREND)
 # =========================
 class PredictionEngine:
     def __init__(self):
@@ -160,28 +160,38 @@ class PredictionEngine:
         return max(60, base - (streak_loss * 5))
 
     def get_pattern_signal(self, current_streak_loss):
-        if len(self.history) < 2:
-            return random.choice(["BIG", "SMALL"])
+        # We need at least 3 results to detect a ZigZag pattern (e.g., B-S-B)
+        if len(self.history) < 3:
+            return self.history[0] if self.history else random.choice(["BIG", "SMALL"])
 
         h = self.history
-        last_result = h[0]
-        prev_result = h[1]
+        last = h[0]
+        prev1 = h[1]
+        prev2 = h[2]
 
-        prediction = last_result
-
-        # PHASE 1: Zigzag vs Dragon (loss 0-1)
-        if last_result != prev_result:
-            prediction = "SMALL" if last_result == "BIG" else "BIG"
+        # =========================================================
+        # 🔥 CORE LOGIC: ZIGZAG vs TREND
+        # =========================================================
+        
+        # 1. ZigZag Mode Check
+        # যদি লাস্ট ৩টা রেজাল্ট B-S-B বা S-B-S হয়
+        if (last != prev1) and (prev1 != prev2):
+            # তার মানে ZigZag চলছে (মার্কেট লাফাচ্ছে)
+            # আমরা লাস্ট রেজাল্টের উল্টা ধরব (Opposite)
+            prediction = "SMALL" if last == "BIG" else "BIG"
+            
+        # 2. Default / Trend Mode
+        # অন্যথায় (যদি ড্রাগন বা ডাবল চলে), আমরা লাস্ট রেজাল্ট কপি করব
         else:
-            prediction = last_result
+            prediction = last
 
-        # PHASE 2: Trap Recovery (loss 2-3)
-        if current_streak_loss >= 2 and current_streak_loss < 4:
+        # =========================================================
+        # 🛡️ TRAP RECOVERY
+        # =========================================================
+        # যদি দেখি প্যাটার্ন ডিটেকশন ভুল হয়েছে (টানা ২টা লস)
+        # তখন আমরা ফ্লিপ করব
+        if current_streak_loss >= 2:
             prediction = "SMALL" if prediction == "BIG" else "BIG"
-
-        # PHASE 3: Safety Net (loss 4+)
-        if current_streak_loss >= 4:
-            prediction = last_result
 
         self.last_prediction = prediction
         return prediction
@@ -522,7 +532,6 @@ async def engine_loop(app: Application, my_session: int):
                 break
 
         # ========== SIGNAL ==========
-        # Don't create a new signal immediately right after processing a result in the same tick
         if (not state.active) and (not resolved_this_tick) and (state.last_signal_issue != next_issue):
             if state.streak_loss >= MAX_RECOVERY_STEPS:
                 await broadcast_message(
