@@ -159,7 +159,7 @@ async def get_live_password() -> str:
     return await asyncio.to_thread(fetch_password_a1)
 
 # =========================
-# PREDICTION ENGINE (ZIGZAG + DRAGON MASTER)  ✅ YOUR CODE
+# PREDICTION ENGINE (ZIGZAG + DOUBLE + LOSS RESET)
 # =========================
 class PredictionEngine:
     def __init__(self):
@@ -188,25 +188,39 @@ class PredictionEngine:
         if len(self.history) < 2:
             return random.choice(["BIG", "SMALL"])
 
-        h = self.history
-        last_result = h[0]
-        prev_result = h[1]
+        last = self.history[0]
+        prev = self.history[1]
 
-        prediction = last_result
-
-        # PHASE 1: Zigzag vs Dragon (loss 0-1)
-        if last_result != prev_result:
-            prediction = "SMALL" if last_result == "BIG" else "BIG"
+        # =========================================================
+        # 🔥 CORE LOGIC: FOLLOW THE IMMEDIATE PATTERN
+        # =========================================================
+        
+        # 1. ZigZag Mode (মার্কেট উল্টাচ্ছে)
+        # যদি লাস্ট রেজাল্ট আর তার আগেরটা আলাদা হয় (যেমন: Big -> Small)
+        if last != prev:
+            # তার মানে ZigZag চলছে, তাই আমরাও উল্টা ধরব
+            prediction = "SMALL" if last == "BIG" else "BIG"
+            
+        # 2. Double/Dragon Mode (মার্কেট সেম থাকছে)
+        # যদি লাস্ট রেজাল্ট আর তার আগেরটা সেম হয় (যেমন: Big -> Big)
         else:
-            prediction = last_result
+            # তার মানে Double/Dragon চলছে, তাই আমরাও সেম ধরব
+            prediction = last
 
-        # PHASE 2: Trap Recovery (loss 2-3)
-        if current_streak_loss >= 2 and current_streak_loss < 4:
+        # =========================================================
+        # 🛡️ LOSS RESET: BREAK PATTERN
+        # =========================================================
+        # আপনার কথা: "ওই মুডে চলে যাওয়ার পর একটা লস করলে আবার আগের লজিক"
+        # লস হওয়া মানেই প্যাটার্ন চেঞ্জ হয়েছে।
+        # উদাহরণ: আমরা ZigZag ভেবেছিলাম, কিন্তু Double হয়েছে (Loss)।
+        # তখন আমরা রিস্ক না নিয়ে সেফ মোডে (Trend Follow) থাকব।
+        
+        if current_streak_loss == 1:
+            prediction = last  # Default to Trend/Copy Last
+            
+        # Trap Recovery (যদি ২ বা বেশি লস হয়)
+        if current_streak_loss >= 2:
             prediction = "SMALL" if prediction == "BIG" else "BIG"
-
-        # PHASE 3: Safety Net (loss 4+)
-        if current_streak_loss >= 4:
-            prediction = last_result
 
         self.last_prediction = prediction
         return prediction
