@@ -128,7 +128,7 @@ async def get_live_password() -> str:
     return await asyncio.to_thread(fetch_password_a1)
 
 # =========================
-# PREDICTION ENGINE (ZIGZAG LOOP + COPY PASTE RESET)
+# PREDICTION ENGINE (ZIGZAG PRIORITY)
 # =========================
 class PredictionEngine:
     def __init__(self):
@@ -163,31 +163,25 @@ class PredictionEngine:
         prev2 = self.history[2]
 
         # =========================================================
-        # 🛡️ LOGIC 1: LOSS RECOVERY (COPY PASTE MODE)
+        # 🔥 PRIORITY 1: ZIGZAG MODE (B-S-B or S-B-S)
         # =========================================================
-        # ইউজার বলেছেন: "loss hoilei abr oi copy paste mod cholbe"
-        # অর্থাৎ লস হলে আমরা সোজা লাস্ট রেজাল্ট কপি করব (Trend Follow)।
-        if current_streak_loss > 0:
-            return last
-
-        # =========================================================
-        # ⚡ LOGIC 2: ZIGZAG MODE (WINNING STATE)
-        # =========================================================
-        # ইউজার বলেছেন: "recent 3 ta jodi small big small khele ba 
-        # 3 ta big small big khele thlei zigzag mood e chole jabe"
-        # এবং "cholte thakbe jotokkhon loss na hoy".
-        
-        # চেক: লাস্ট ৩টা রেজাল্ট কি জিগজ্যাগ? (B S B অথবা S B S)
-        is_zigzag = (last != prev1 and prev1 != prev2)
-        
-        if is_zigzag:
-            # জিগজ্যাগ মোড: উল্টা ধরব (B থাকলে S, S থাকলে B)
+        # যদি লাস্ট ৩টা জিগজ্যাগ হয়, তবে লস থাকলেও এটা ফলো করবে।
+        if last != prev1 and prev1 != prev2:
+            # ZigZag Mode: উল্টা ধরো
             return "SMALL" if last == "BIG" else "BIG"
 
         # =========================================================
-        # 🐢 LOGIC 3: DEFAULT COPY PASTE (DRAGON/TREND)
+        # 🔥 PRIORITY 2: DOUBLE MODE (B-B or S-S)
         # =========================================================
-        # যদি জিগজ্যাগ না থাকে এবং লসও না থাকে, তবে ডিফল্ট কপি পেস্ট।
+        # যদি লাস্ট ২টা সেম হয়, তবে সেম ধরবে।
+        if last == prev1:
+            return last
+
+        # =========================================================
+        # 🐢 PRIORITY 3: DEFAULT / LOSS RECOVERY
+        # =========================================================
+        # যদি কোনো স্ট্রং প্যাটার্ন না থাকে (বা প্যাটার্ন ভেঙে যায়), 
+        # তখন আমরা সেফ মোড (Trend Follow/Copy Paste) এ থাকব।
         return last
 
 # =========================
@@ -200,7 +194,7 @@ def now_bd_str() -> str:
 class ActiveBet:
     predicted_issue: str
     pick: str
-    random_color: Optional[str] = None # For random color
+    random_color: Optional[str] = None
     checking_msg_ids: Dict[int, int] = field(default_factory=dict)
 
 @dataclass
@@ -226,7 +220,7 @@ class BotState:
 
     selected_targets: List[int] = field(default_factory=lambda: [TARGETS["MAIN_GROUP"]])
 
-    color_mode: bool = False  # Random color mode
+    color_mode: bool = False
 
     graceful_stop_requested: bool = False
     stop_event: asyncio.Event = field(default_factory=asyncio.Event)
@@ -352,7 +346,7 @@ def panel_text() -> str:
     total = state.wins + state.losses
     wr = (state.wins / total * 100) if total else 0.0
 
-    color = "🎨 <b>COLOR:</b> <b>RANDOM</b>" if state.color_mode else "🎨 <b>COLOR:</b> <b>OFF</b>"
+    color = "🎨 <b>COLOR:</b> <b>ON</b>" if state.color_mode else "🎨 <b>COLOR:</b> <b>OFF</b>"
     
     grace = "🧠 <b>STOP AFTER WIN:</b> ✅" if state.graceful_stop_requested else "🧠 <b>STOP AFTER WIN:</b> ❌"
 
@@ -450,9 +444,6 @@ async def start_session(bot):
     state.last_result_issue = None
     state.last_signal_issue = None
 
-    # Color mode is manually toggled, we don't force it off
-    # state.color_mode = False 
-
     reset_stats()
 
     await broadcast_sticker(bot, STICKERS["START_1M"])
@@ -539,7 +530,6 @@ async def engine_loop(app: Application, my_session: int):
             pred = state.engine.get_pattern_signal(state.streak_loss)
             conf = state.engine.calc_confidence(state.streak_loss)
 
-            # Random Color Generation
             rand_color = None
             if state.color_mode:
                 rand_color = random.choice(["GREEN", "RED"])
@@ -547,7 +537,6 @@ async def engine_loop(app: Application, my_session: int):
             s_stk = STICKERS["PRED_1M_BIG"] if pred == "BIG" else STICKERS["PRED_1M_SMALL"]
             await broadcast_sticker(bot, s_stk)
 
-            # Sticker for color if mode is ON
             if state.color_mode and rand_color:
                 await broadcast_sticker(bot, STICKERS["COLOR_GREEN"] if rand_color == "GREEN" else STICKERS["COLOR_RED"])
 
