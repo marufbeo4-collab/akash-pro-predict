@@ -52,31 +52,6 @@ MAX_RECOVERY_STEPS = 8
 ENGINE_TICK = 0.8  # loop smooth
 
 # =========================
-# AUTO SCHEDULE (BD TIME)
-# =========================
-AUTO_WINDOWS = [
-    ("21:00", "21:30"),
-    ("23:00", "23:30"),
-    ("10:00", "10:30"),
-    ("12:00", "12:30"),
-    ("15:00", "15:30"),
-    ("19:00", "19:30"),
-]
-
-def _hhmm_to_minutes(hhmm: str) -> int:
-    h, m = hhmm.split(":")
-    return int(h) * 60 + int(m)
-
-AUTO_WINDOWS_MIN = [(_hhmm_to_minutes(a), _hhmm_to_minutes(b)) for a, b in AUTO_WINDOWS]
-
-def is_now_in_any_window(now: datetime) -> bool:
-    mins = now.hour * 60 + now.minute
-    for a, b in AUTO_WINDOWS_MIN:
-        if a <= mins < b:
-            return True
-    return False
-
-# =========================
 # STICKERS (KEEP AS YOUR LIST)
 # =========================
 STICKERS = {
@@ -159,7 +134,7 @@ async def get_live_password() -> str:
     return await asyncio.to_thread(fetch_password_a1)
 
 # =========================
-# PREDICTION ENGINE (ZIGZAG + DOUBLE + LOSS RESET)
+# PREDICTION ENGINE (ZIGZAG + DRAGON MASTER)  ✅ YOUR CODE
 # =========================
 class PredictionEngine:
     def __init__(self):
@@ -188,39 +163,25 @@ class PredictionEngine:
         if len(self.history) < 2:
             return random.choice(["BIG", "SMALL"])
 
-        last = self.history[0]
-        prev = self.history[1]
+        h = self.history
+        last_result = h[0]
+        prev_result = h[1]
 
-        # =========================================================
-        # 🔥 CORE LOGIC: FOLLOW THE IMMEDIATE PATTERN
-        # =========================================================
-        
-        # 1. ZigZag Mode (মার্কেট উল্টাচ্ছে)
-        # যদি লাস্ট রেজাল্ট আর তার আগেরটা আলাদা হয় (যেমন: Big -> Small)
-        if last != prev:
-            # তার মানে ZigZag চলছে, তাই আমরাও উল্টা ধরব
-            prediction = "SMALL" if last == "BIG" else "BIG"
-            
-        # 2. Double/Dragon Mode (মার্কেট সেম থাকছে)
-        # যদি লাস্ট রেজাল্ট আর তার আগেরটা সেম হয় (যেমন: Big -> Big)
+        prediction = last_result
+
+        # PHASE 1: Zigzag vs Dragon (loss 0-1)
+        if last_result != prev_result:
+            prediction = "SMALL" if last_result == "BIG" else "BIG"
         else:
-            # তার মানে Double/Dragon চলছে, তাই আমরাও সেম ধরব
-            prediction = last
+            prediction = last_result
 
-        # =========================================================
-        # 🛡️ LOSS RESET: BREAK PATTERN
-        # =========================================================
-        # আপনার কথা: "ওই মুডে চলে যাওয়ার পর একটা লস করলে আবার আগের লজিক"
-        # লস হওয়া মানেই প্যাটার্ন চেঞ্জ হয়েছে।
-        # উদাহরণ: আমরা ZigZag ভেবেছিলাম, কিন্তু Double হয়েছে (Loss)।
-        # তখন আমরা রিস্ক না নিয়ে সেফ মোডে (Trend Follow) থাকব।
-        
-        if current_streak_loss == 1:
-            prediction = last  # Default to Trend/Copy Last
-            
-        # Trap Recovery (যদি ২ বা বেশি লস হয়)
-        if current_streak_loss >= 2:
+        # PHASE 2: Trap Recovery (loss 2-3)
+        if current_streak_loss >= 2 and current_streak_loss < 4:
             prediction = "SMALL" if prediction == "BIG" else "BIG"
+
+        # PHASE 3: Safety Net (loss 4+)
+        if current_streak_loss >= 4:
+            prediction = last_result
 
         self.last_prediction = prediction
         return prediction
@@ -261,13 +222,6 @@ class BotState:
     selected_targets: List[int] = field(default_factory=lambda: [TARGETS["MAIN_GROUP"]])
 
     color_mode: bool = False  # default OFF always
-
-    auto_schedule_enabled: bool = True
-    started_by_schedule: bool = False
-
-    # IMPORTANT: schedule_end_requested means time window ended,
-    # but we won't stop immediately if loss/recovery is running.
-    schedule_end_requested: bool = False
 
     # graceful stop after win (manual)
     graceful_stop_requested: bool = False
@@ -396,22 +350,13 @@ def panel_text() -> str:
     wr = (state.wins / total * 100) if total else 0.0
 
     color = "🎨 <b>COLOR:</b> <b>ON</b>" if state.color_mode else "🎨 <b>COLOR:</b> <b>OFF</b>"
-    auto = "⏰ <b>SCHEDULE:</b> <b>ON</b>" if state.auto_schedule_enabled else "⏰ <b>SCHEDULE:</b> <b>OFF</b>"
-    windows = " | ".join([f"{a}-{b}" for a, b in AUTO_WINDOWS])
-    origin = "🧩 <b>RUN MODE:</b> <b>AUTO</b>" if (state.running and state.started_by_schedule) else "🧩 <b>RUN MODE:</b> <b>MANUAL</b>"
-
     grace = "🧠 <b>STOP AFTER WIN:</b> ✅" if state.graceful_stop_requested else "🧠 <b>STOP AFTER WIN:</b> ❌"
-    pend = "⛔ <b>WINDOW END:</b> <b>PENDING (Recovery Running)</b>" if state.schedule_end_requested else "✅ <b>WINDOW END:</b> <b>OK</b>"
 
     return (
         "🔐 <b>CONTROL PANEL</b>\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         f"📡 <b>Status:</b> {running}\n"
-        f"{origin}\n"
         f"{color}\n"
-        f"{auto}\n"
-        f"🗓 <b>Times:</b> <i>{windows}</i>\n"
-        f"{pend}\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         "📊 <b>Live Stats</b>\n"
         f"✅ Win: <b>{state.wins}</b>\n"
@@ -425,8 +370,7 @@ def panel_text() -> str:
 
 def selector_markup() -> InlineKeyboardMarkup:
     rows = [
-        [InlineKeyboardButton("🎨 Color: ON" if state.color_mode else "🎨 Color: OFF", callback_data="TOGGLE_COLOR"),
-         InlineKeyboardButton("⏰ Schedule: ON" if state.auto_schedule_enabled else "⏰ Schedule: OFF", callback_data="TOGGLE_AUTO")],
+        [InlineKeyboardButton("🎨 Color: ON" if state.color_mode else "🎨 Color: OFF", callback_data="TOGGLE_COLOR")],
         [InlineKeyboardButton("⚡ Start 1 MIN", callback_data="START:1M")],
         [InlineKeyboardButton("🧠 Stop After Win", callback_data="STOP:GRACEFUL"),
          InlineKeyboardButton("🛑 Stop Now", callback_data="STOP:FORCE")],
@@ -490,10 +434,8 @@ async def stop_session(bot, reason: str = "manual"):
 
     state.active = None
     state.graceful_stop_requested = False
-    state.started_by_schedule = False
-    state.schedule_end_requested = False
 
-async def start_session(bot, started_by_schedule: bool):
+async def start_session(bot):
     state.session_id += 1
     state.running = True
     state.stop_event.clear()
@@ -503,9 +445,6 @@ async def start_session(bot, started_by_schedule: bool):
     state.active = None
     state.last_result_issue = None
     state.last_signal_issue = None
-
-    state.started_by_schedule = started_by_schedule
-    state.schedule_end_requested = False
 
     # default OFF always
     state.color_mode = False
@@ -582,12 +521,6 @@ async def engine_loop(app: Application, my_session: int):
                 await stop_session(bot, reason="graceful_done")
                 break
 
-            # Schedule-end pending: only stop after RECOVERY is cleared (means streak_loss == 0 and no active bet)
-            # If schedule window ended and we got a WIN (recovery reset to 0), we can stop now.
-            if state.schedule_end_requested and state.streak_loss == 0 and state.active is None:
-                await stop_session(bot, reason="schedule_end_after_recovery")
-                break
-
         # ========== SIGNAL ==========
         # Don't create a new signal immediately right after processing a result in the same tick
         if (not state.active) and (not resolved_this_tick) and (state.last_signal_issue != next_issue):
@@ -623,35 +556,6 @@ async def engine_loop(app: Application, my_session: int):
             state.last_signal_issue = next_issue
 
         await asyncio.sleep(ENGINE_TICK)
-
-# =========================
-# SCHEDULER LOOP (Auto start/stop with recovery safe)
-# =========================
-async def scheduler_loop(app: Application):
-    while True:
-        try:
-            now = datetime.now(BD_TZ)
-            in_window = is_now_in_any_window(now)
-
-            if state.auto_schedule_enabled:
-                # Auto start
-                if in_window and (not state.running):
-                    await start_session(app.bot, started_by_schedule=True)
-                    app.create_task(engine_loop(app, state.session_id))
-
-                # Auto end logic:
-                # If window ended but bot has loss/recovery going -> set pending, don't stop immediately.
-                elif (not in_window) and state.running and state.started_by_schedule:
-                    # If loss streak exists or active bet exists -> pending stop after recovery
-                    if state.streak_loss > 0 or state.active is not None:
-                        state.schedule_end_requested = True
-                    else:
-                        await stop_session(app.bot, reason="schedule_end_clean")
-
-        except Exception:
-            pass
-
-        await asyncio.sleep(10)
 
 # =========================
 # COMMANDS & CALLBACKS
@@ -707,15 +611,10 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await q.edit_message_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
         return
 
-    if data == "TOGGLE_AUTO":
-        state.auto_schedule_enabled = not state.auto_schedule_enabled
-        await q.edit_message_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
-        return
-
     if data == "START:1M":
         if state.running:
             await stop_session(context.bot, reason="restart_manual")
-        await start_session(context.bot, started_by_schedule=False)
+        await start_session(context.bot)
         context.application.create_task(engine_loop(context.application, state.session_id))
         await q.edit_message_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
         return
@@ -736,12 +635,6 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 # =========================
-# POST INIT (Fix: no running event loop)
-# =========================
-async def post_init(app: Application):
-    app.create_task(scheduler_loop(app))
-
-# =========================
 # MAIN
 # =========================
 def main():
@@ -751,7 +644,6 @@ def main():
     application = (
         Application.builder()
         .token(BOT_TOKEN)
-        .post_init(post_init)  # ✅ Fix runtime error on Render/Py3.13
         .build()
     )
 
