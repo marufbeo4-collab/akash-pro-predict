@@ -25,29 +25,22 @@ from telegram.ext import (
 # =========================
 # CONFIG (ONLY TOKEN YOU SET)
 # =========================
-BOT_TOKEN = "8534138943:AAHvIRzDybgZz8Vu2AA935BSvDzsXT4TDR0"  # <-- ONLY THIS YOU CHANGE
+BOT_TOKEN = "8534138943:AAHvIRzDybgZz8Vu2AA935BSvDzsXT4TDR0"
 
 BRAND_NAME = "𝐋𝐄𝐀𝐃𝐄𝐑 𝐀𝐊𝐀𝐒𝐇 𝐕𝐈𝐏™"
 CHANNEL_LINK = "https://t.me/N_JCOMMUNITY"
-
-# TK CLUB MARKETING
 REG_LINK = "https://tkclub2.com/#/register?invitationCode=54348203116"
-OWNER_USERNAME = "@LEADER_AKASH69"  # চাইলে akash owner দিলে বদলাবেন
+OWNER_USERNAME = "@LEADER_AKASH69"
 
-# Targets (You gave)
-TARGETS = {
-    "MAIN_GROUP": -1003651634734,
-}
+TARGETS = {"MAIN_GROUP": -1003651634734}
 
 # =========================
 # MARUF-STYLE 1M API (POST)
 # =========================
 API_URL = "https://api880.inpay88.net/api/webapi/GetNoaverageEmerdList"
-
 FETCH_TIMEOUT = 6.0
 FETCH_RETRY_SLEEP = 0.7
 
-# BD Time
 BD_TZ = timezone(timedelta(hours=6))
 
 # Password source A1 (PUBLIC VIEW required)
@@ -55,9 +48,8 @@ PASSWORD_SHEET_ID = "1_x1JOZp3HOTf9x02qKB0Tm4wD6Ype9MgguH-ATD0QCk"
 PASSWORD_SHEET_GID = "0"
 PASSWORD_FALLBACK = "2222"
 
-# Settings
 MAX_RECOVERY_STEPS = 8
-ENGINE_TICK = 0.8  # 1M loop smooth
+ENGINE_TICK = 0.8  # loop smooth
 
 # =========================
 # AUTO SCHEDULE (BD TIME)
@@ -85,29 +77,22 @@ def is_now_in_any_window(now: datetime) -> bool:
     return False
 
 # =========================
-# STICKERS (YOUR LIST)
+# STICKERS (KEEP AS YOUR LIST)
 # =========================
 STICKERS = {
-    # Prediction (1M)
     "PRED_1M_BIG": "CAACAgUAAxkBAAEQTr5pcwrBGAZ5xLp_AUAFWSiWiS0rOwAC4R0AAg7MoFcKItGd1m2CsjgE",
     "PRED_1M_SMALL": "CAACAgUAAxkBAAEQTr9pcwrC7iH-Ei5xHz2QapE-DFkgLQACXxkAAoNWmFeTSY6h7y7VlzgE",
 
-    # Start sticker (1M)
     "START_1M": "CAACAgUAAxkBAAEQUrRpdYvESSIrn4-Lm936I6F8_BaN-wACChYAAuBHOVc6YQfcV-EKqjgE",
-
-    # Always give this at START/END
     "START_END_ALWAYS": "CAACAgUAAxkBAAEQTjRpcmWdzXBzA7e9KNz8QgTI6NXlxgACuRcAAh2x-FaJNjq4QG_DujgE",
 
-    # Win stickers
     "WIN_BIG": "CAACAgUAAxkBAAEQTjhpcmXknd41yv99at8qxdgw3ivEkAACyRUAAraKsFSky2Ut1kt-hjgE",
     "WIN_SMALL": "CAACAgUAAxkBAAEQTjlpcmXkF8R0bNj0jb1Xd8NF-kaTSQAC7DQAAhnRsVTS3-Z8tj-kajgE",
     "WIN_ALWAYS": "CAACAgUAAxkBAAEQUTZpdFC4094KaOEdiE3njwhAGVCuBAAC4hoAAt0EqVQXmdKVLGbGmzgE",
     "WIN_ANY": "CAACAgUAAxkBAAEQTydpcz9Kv1L2PJyNlbkcZpcztKKxfQACDRsAAoq1mFcAAYLsJ33TdUA4BA",
 
-    # Loss sticker
     "LOSS": "CAACAgUAAxkBAAEQTytpcz9VQoHyZ5ClbKSqKCJbpqX6yQACahYAAl1wAAFUL9xOdyh8UL84BA",
 
-    # Random win pool
     "WIN_POOL": [
         "CAACAgUAAxkBAAEQTzNpcz9ns8rx_5xmxk4HHQOJY2uUQQAC3RoAAuCpcFbMKj0VkxPOdTgE",
         "CAACAgUAAxkBAAEQTzRpcz9ni_I4CjwFZ3iSt4xiXxFgkwACkxgAAnQKcVYHd8IiRqfBXTgE",
@@ -121,7 +106,6 @@ STICKERS = {
         "CAACAgUAAxkBAAEQUCdpc4IuoaqPZ-5vn2RTlJZ_kbeXHQACXRUAAgln-FQ8iTzzJg_GLzgE",
     ],
 
-    # Super win streak 2..10 (required)
     "SUPER_WIN": {
         2: "CAACAgUAAxkBAAEQTiBpcmUfm9aQmlIHtPKiG2nE2e6EeAACcRMAAiLWqFSpdxWmKJ1TXzgE",
         3: "CAACAgUAAxkBAAEQTiFpcmUgdgJQ_czeoFyRhNZiZI2lwwAC8BcAAv8UqFSVBQEdUW48HTgE",
@@ -134,7 +118,6 @@ STICKERS = {
         10: "CAACAgUAAxkBAAEQTi5pcmUmjmjp7oXg4InxI1dGYruxDwACqBgAAh19qVT6X_-oEywCkzgE",
     },
 
-    # Color stickers
     "COLOR_RED": "CAACAgUAAxkBAAEQUClpc4JDd9n_ZQ45hPk-a3tEjFXnugACbhgAAqItoVd2zRs4VkXOHDgE",
     "COLOR_GREEN": "CAACAgUAAxkBAAEQUCppc4JDHWjTzBCFIOx2Hcjtz9UnnAACzRwAAnR3oVejA9DVGekyYTgE",
 }
@@ -164,12 +147,7 @@ def fetch_password_a1() -> str:
             f"https://docs.google.com/spreadsheets/d/{PASSWORD_SHEET_ID}/export"
             f"?format=csv&gid={PASSWORD_SHEET_GID}&range=A1"
         )
-        r = requests.get(
-            url,
-            timeout=8,
-            allow_redirects=True,
-            headers={"User-Agent": "Mozilla/5.0", "Cache-Control": "no-cache", "Pragma": "no-cache"},
-        )
+        r = requests.get(url, timeout=8, allow_redirects=True, headers={"User-Agent": "Mozilla/5.0"})
         if r.status_code != 200:
             return PASSWORD_FALLBACK
         val = r.text.strip().strip('"').strip()
@@ -181,7 +159,7 @@ async def get_live_password() -> str:
     return await asyncio.to_thread(fetch_password_a1)
 
 # =========================
-# PREDICTION ENGINE (YOUR LOGIC KEPT)
+# PREDICTION ENGINE (ZIGZAG + DRAGON MASTER)  ✅ YOUR CODE
 # =========================
 class PredictionEngine:
     def __init__(self):
@@ -203,75 +181,32 @@ class PredictionEngine:
             self.raw_history = self.raw_history[:120]
 
     def calc_confidence(self, streak_loss):
-        base_conf = random.randint(90, 95)
-        if streak_loss == 0:
-            return min(99, base_conf + random.randint(1, 4))
-        return max(40, base_conf - random.randint(2, 10))
+        base = random.randint(95, 99)
+        return max(60, base - (streak_loss * 5))
 
     def get_pattern_signal(self, current_streak_loss):
-        if len(self.history) < 15:
+        if len(self.history) < 2:
             return random.choice(["BIG", "SMALL"])
 
         h = self.history
-        votes = []
+        last_result = h[0]
+        prev_result = h[1]
 
-        last_12 = h[:12]
-        votes.append("BIG" if last_12.count("BIG") > last_12.count("SMALL") else "SMALL")
-        votes.append(h[0])
+        prediction = last_result
 
-        if h[0] == h[1] == h[2]:
-            votes.append(h[0])
-
-        if h[0] == h[1] and h[2] == h[3] and h[1] != h[2]:
-            votes.append("SMALL" if h[0] == "BIG" else "BIG")
-
-        if h[0] != h[1]:
-            zigzag_vote = "SMALL" if h[0] == "BIG" else "BIG"
-            votes.extend([zigzag_vote, zigzag_vote, zigzag_vote])
-
-        try:
-            r_num = int(self.raw_history[0].get("number", 0))
-            p_digit = int(str(self.raw_history[0].get("issueNumber", 0))[-1])
-            prev_num = int(self.raw_history[1].get("number", 0))
-
-            votes.append("SMALL" if (p_digit + r_num) % 2 == 0 else "BIG")
-            votes.append("SMALL" if (r_num + prev_num) % 2 == 0 else "BIG")
-            votes.append("BIG" if r_num >= 5 else "SMALL")
-        except Exception:
-            pass
-
-        current_pat = h[:3]
-        match_big, match_small = 0, 0
-        for i in range(1, len(h) - 3):
-            if h[i : i + 3] == current_pat:
-                if h[i - 1] == "BIG":
-                    match_big += 1
-                else:
-                    match_small += 1
-        if match_big > match_small:
-            votes.append("BIG")
-        elif match_small > match_big:
-            votes.append("SMALL")
-
-        if current_streak_loss >= 2 and self.last_prediction in ("BIG", "SMALL"):
-            rec_vote = "SMALL" if self.last_prediction == "BIG" else "BIG"
-            votes.extend([rec_vote, rec_vote])
-
-        big_votes = votes.count("BIG")
-        small_votes = votes.count("SMALL")
-
-        if big_votes > small_votes:
-            prediction = "BIG"
-        elif small_votes > big_votes:
-            prediction = "SMALL"
+        # PHASE 1: Zigzag vs Dragon (loss 0-1)
+        if last_result != prev_result:
+            prediction = "SMALL" if last_result == "BIG" else "BIG"
         else:
-            prediction = h[0]
+            prediction = last_result
 
+        # PHASE 2: Trap Recovery (loss 2-3)
+        if current_streak_loss >= 2 and current_streak_loss < 4:
+            prediction = "SMALL" if prediction == "BIG" else "BIG"
+
+        # PHASE 3: Safety Net (loss 4+)
         if current_streak_loss >= 4:
-            if h[0] != h[1]:
-                prediction = "SMALL" if h[0] == "BIG" else "BIG"
-            else:
-                prediction = h[0]
+            prediction = last_result
 
         self.last_prediction = prediction
         return prediction
@@ -311,14 +246,18 @@ class BotState:
 
     selected_targets: List[int] = field(default_factory=lambda: [TARGETS["MAIN_GROUP"]])
 
-    # default OFF (as you want)
-    color_mode: bool = False
+    color_mode: bool = False  # default OFF always
 
-    # schedule system
     auto_schedule_enabled: bool = True
     started_by_schedule: bool = False
 
+    # IMPORTANT: schedule_end_requested means time window ended,
+    # but we won't stop immediately if loss/recovery is running.
+    schedule_end_requested: bool = False
+
+    # graceful stop after win (manual)
     graceful_stop_requested: bool = False
+
     stop_event: asyncio.Event = field(default_factory=asyncio.Event)
 
 state = BotState()
@@ -347,7 +286,7 @@ def _fetch_latest_issue_sync() -> Optional[dict]:
         if r.status_code == 200:
             data = r.json()
             if data and "data" in data and "list" in data["data"] and data["data"]["list"]:
-                return data["data"]["list"][0]  # latest CLOSED
+                return data["data"]["list"][0]
     except Exception:
         pass
     return None
@@ -356,16 +295,13 @@ async def fetch_latest_issue() -> Optional[dict]:
     return await asyncio.to_thread(_fetch_latest_issue_sync)
 
 # =========================
-# MESSAGES (Premium, changed style)
+# MESSAGES (Premium)
 # =========================
 def pick_badge(pick: str) -> str:
     return "🟢 <b>BIG</b>" if pick == "BIG" else "🔴 <b>SMALL</b>"
 
 def color_badge_from_pick(pick: str) -> str:
     return "🟩 <b>GREEN</b>" if pick == "BIG" else "🟥 <b>RED</b>"
-
-def recovery_text(loss_streak: int) -> str:
-    return f"<b>{loss_streak}/{MAX_RECOVERY_STEPS}</b>"
 
 def marketing_block() -> str:
     return (
@@ -384,7 +320,7 @@ def format_signal(issue: str, pick: str, conf: int) -> str:
         f"🧾 <b>Period:</b> <code>{issue}</code>\n"
         f"{entry}\n"
         f"✨ <b>Confidence:</b> 🔥 <b>{conf}%</b>\n"
-        f"🧠 <b>Recovery:</b> {recovery_text(state.streak_loss)}\n"
+        f"🧠 <b>Recovery:</b> <b>{state.streak_loss}/{MAX_RECOVERY_STEPS}</b>\n"
         f"🕒 <b>{now_bd_str()}</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{marketing_block()}\n"
@@ -407,7 +343,7 @@ def format_result(issue: str, res_num: str, res_type: str, pick: str, is_win: bo
         f"🧾 <b>Period:</b> <code>{issue}</code>\n"
         f"🎰 <b>Result:</b> {res_emoji} <b>{res_num} ({res_type})</b>\n"
         f"🎯 <b>Your Pick:</b> {pick_badge(pick)}\n"
-        f"🧠 <b>Recovery:</b> {recovery_text(state.streak_loss)}\n"
+        f"🧠 <b>Recovery:</b> <b>{state.streak_loss}/{MAX_RECOVERY_STEPS}</b>\n"
         f"📊 <b>W:</b> <b>{state.wins}</b> | <b>L:</b> <b>{state.losses}</b>\n"
         f"🕒 <b>{now_bd_str()}</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -433,7 +369,7 @@ def format_summary() -> str:
     )
 
 # =========================
-# PANEL (Akash style + schedule toggle)
+# PANEL
 # =========================
 def _chat_name(chat_id: int) -> str:
     if chat_id == TARGETS["MAIN_GROUP"]:
@@ -442,19 +378,16 @@ def _chat_name(chat_id: int) -> str:
 
 def panel_text() -> str:
     running = "🟢 RUNNING" if state.running else "🔴 STOPPED"
-    sel = state.selected_targets[:] if state.selected_targets else [TARGETS["MAIN_GROUP"]]
-    sel_lines = "\n".join([f"✅ <b>{_chat_name(cid)}</b> <code>{cid}</code>" for cid in sel])
-
     total = state.wins + state.losses
     wr = (state.wins / total * 100) if total else 0.0
 
     color = "🎨 <b>COLOR:</b> <b>ON</b>" if state.color_mode else "🎨 <b>COLOR:</b> <b>OFF</b>"
-    grace = "🧠 <b>STOP AFTER WIN:</b> ✅" if state.graceful_stop_requested else "🧠 <b>STOP AFTER WIN:</b> ❌"
     auto = "⏰ <b>SCHEDULE:</b> <b>ON</b>" if state.auto_schedule_enabled else "⏰ <b>SCHEDULE:</b> <b>OFF</b>"
-
     windows = " | ".join([f"{a}-{b}" for a, b in AUTO_WINDOWS])
-
     origin = "🧩 <b>RUN MODE:</b> <b>AUTO</b>" if (state.running and state.started_by_schedule) else "🧩 <b>RUN MODE:</b> <b>MANUAL</b>"
+
+    grace = "🧠 <b>STOP AFTER WIN:</b> ✅" if state.graceful_stop_requested else "🧠 <b>STOP AFTER WIN:</b> ❌"
+    pend = "⛔ <b>WINDOW END:</b> <b>PENDING (Recovery Running)</b>" if state.schedule_end_requested else "✅ <b>WINDOW END:</b> <b>OK</b>"
 
     return (
         "🔐 <b>CONTROL PANEL</b>\n"
@@ -464,9 +397,7 @@ def panel_text() -> str:
         f"{color}\n"
         f"{auto}\n"
         f"🗓 <b>Times:</b> <i>{windows}</i>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "🎯 <b>Send Signals To</b>\n"
-        f"{sel_lines}\n"
+        f"{pend}\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         "📊 <b>Live Stats</b>\n"
         f"✅ Win: <b>{state.wins}</b>\n"
@@ -479,22 +410,13 @@ def panel_text() -> str:
     )
 
 def selector_markup() -> InlineKeyboardMarkup:
-    def btn(name: str, chat_id: int) -> InlineKeyboardButton:
-        on = "✅" if chat_id in state.selected_targets else "⬜"
-        return InlineKeyboardButton(f"{on} {name}", callback_data=f"TOGGLE:{chat_id}")
-
     rows = [
-        [btn("MAIN GROUP", TARGETS["MAIN_GROUP"])],
-        [
-            InlineKeyboardButton("🎨 Color: ON" if state.color_mode else "🎨 Color: OFF", callback_data="TOGGLE_COLOR"),
-            InlineKeyboardButton("⏰ Schedule: ON" if state.auto_schedule_enabled else "⏰ Schedule: OFF", callback_data="TOGGLE_AUTO"),
-        ],
+        [InlineKeyboardButton("🎨 Color: ON" if state.color_mode else "🎨 Color: OFF", callback_data="TOGGLE_COLOR"),
+         InlineKeyboardButton("⏰ Schedule: ON" if state.auto_schedule_enabled else "⏰ Schedule: OFF", callback_data="TOGGLE_AUTO")],
         [InlineKeyboardButton("⚡ Start 1 MIN", callback_data="START:1M")],
-        [
-            InlineKeyboardButton("🧠 Stop After Win", callback_data="STOP:GRACEFUL"),
-            InlineKeyboardButton("🛑 Stop Now", callback_data="STOP:FORCE"),
-        ],
-        [InlineKeyboardButton("🔄 Refresh Panel", callback_data="REFRESH_PANEL")],
+        [InlineKeyboardButton("🧠 Stop After Win", callback_data="STOP:GRACEFUL"),
+         InlineKeyboardButton("🛑 Stop Now", callback_data="STOP:FORCE")],
+        [InlineKeyboardButton("🔄 Refresh Panel", callback_data="REFRESH_PANEL")]
     ]
     return InlineKeyboardMarkup(rows)
 
@@ -518,12 +440,7 @@ async def broadcast_message(bot, text: str) -> Dict[int, int]:
     out = {}
     for cid in state.selected_targets:
         try:
-            m = await bot.send_message(
-                cid,
-                text,
-                parse_mode=ParseMode.HTML,
-                disable_web_page_preview=True,
-            )
+            m = await bot.send_message(cid, text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
             out[cid] = m.message_id
         except Exception:
             pass
@@ -549,8 +466,8 @@ async def stop_session(bot, reason: str = "manual"):
         for cid, mid in (state.active.checking_msg_ids or {}).items():
             await safe_delete(bot, cid, mid)
 
-    # End sticker + summary
     await broadcast_sticker(bot, STICKERS["START_END_ALWAYS"])
+
     for cid in state.selected_targets:
         try:
             await bot.send_message(cid, format_summary(), parse_mode=ParseMode.HTML, disable_web_page_preview=True)
@@ -560,6 +477,7 @@ async def stop_session(bot, reason: str = "manual"):
     state.active = None
     state.graceful_stop_requested = False
     state.started_by_schedule = False
+    state.schedule_end_requested = False
 
 async def start_session(bot, started_by_schedule: bool):
     state.session_id += 1
@@ -573,8 +491,9 @@ async def start_session(bot, started_by_schedule: bool):
     state.last_signal_issue = None
 
     state.started_by_schedule = started_by_schedule
+    state.schedule_end_requested = False
 
-    # always default color OFF at new session
+    # default OFF always
     state.color_mode = False
 
     reset_stats()
@@ -606,7 +525,7 @@ async def engine_loop(app: Application, my_session: int):
 
         resolved_this_tick = False
 
-        # 1) RESULT
+        # ========== RESULT ==========
         if state.active and state.active.predicted_issue == issue:
             if state.last_result_issue == issue:
                 await asyncio.sleep(0.2)
@@ -644,11 +563,19 @@ async def engine_loop(app: Application, my_session: int):
             state.active = None
             resolved_this_tick = True
 
+            # Manual graceful stop: stop after a WIN
             if state.graceful_stop_requested and is_win:
                 await stop_session(bot, reason="graceful_done")
                 break
 
-        # 2) SIGNAL
+            # Schedule-end pending: only stop after RECOVERY is cleared (means streak_loss == 0 and no active bet)
+            # If schedule window ended and we got a WIN (recovery reset to 0), we can stop now.
+            if state.schedule_end_requested and state.streak_loss == 0 and state.active is None:
+                await stop_session(bot, reason="schedule_end_after_recovery")
+                break
+
+        # ========== SIGNAL ==========
+        # Don't create a new signal immediately right after processing a result in the same tick
         if (not state.active) and (not resolved_this_tick) and (state.last_signal_issue != next_issue):
             if state.streak_loss >= MAX_RECOVERY_STEPS:
                 await broadcast_message(
@@ -684,25 +611,28 @@ async def engine_loop(app: Application, my_session: int):
         await asyncio.sleep(ENGINE_TICK)
 
 # =========================
-# SCHEDULER LOOP (Auto start/stop)
+# SCHEDULER LOOP (Auto start/stop with recovery safe)
 # =========================
 async def scheduler_loop(app: Application):
-    """
-    Auto schedule:
-    - within window AND not running -> auto start
-    - outside window AND running AND started_by_schedule -> auto stop
-    """
     while True:
         try:
             now = datetime.now(BD_TZ)
             in_window = is_now_in_any_window(now)
 
             if state.auto_schedule_enabled:
+                # Auto start
                 if in_window and (not state.running):
                     await start_session(app.bot, started_by_schedule=True)
                     app.create_task(engine_loop(app, state.session_id))
+
+                # Auto end logic:
+                # If window ended but bot has loss/recovery going -> set pending, don't stop immediately.
                 elif (not in_window) and state.running and state.started_by_schedule:
-                    await stop_session(app.bot, reason="schedule_end")
+                    # If loss streak exists or active bet exists -> pending stop after recovery
+                    if state.streak_loss > 0 or state.active is not None:
+                        state.schedule_end_requested = True
+                    else:
+                        await stop_session(app.bot, reason="schedule_end_clean")
 
         except Exception:
             pass
@@ -717,7 +647,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state.unlocked = False
     await update.message.reply_text(
         "🔒 <b>SYSTEM LOCKED</b>\n━━━━━━━━━━━━━━━━━━━━\n✅ Password দিন:",
-        parse_mode=ParseMode.HTML,
+        parse_mode=ParseMode.HTML
     )
 
 async def cmd_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -729,7 +659,7 @@ async def cmd_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         panel_text(),
         parse_mode=ParseMode.HTML,
         reply_markup=selector_markup(),
-        disable_web_page_preview=True,
+        disable_web_page_preview=True
     )
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -740,12 +670,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if txt == state.expected_password:
             state.unlocked = True
             await update.message.reply_text("✅ <b>UNLOCKED</b>", parse_mode=ParseMode.HTML)
-            await update.message.reply_text(
-                panel_text(),
-                parse_mode=ParseMode.HTML,
-                reply_markup=selector_markup(),
-                disable_web_page_preview=True,
-            )
+            await update.message.reply_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
         else:
             await update.message.reply_text("❌ <b>WRONG PASSWORD</b>", parse_mode=ParseMode.HTML)
         return
@@ -763,19 +688,6 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await q.edit_message_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
         return
 
-    if data.startswith("TOGGLE:"):
-        cid = int(data.split(":", 1)[1])
-        if cid in state.selected_targets:
-            state.selected_targets.remove(cid)
-        else:
-            state.selected_targets.append(cid)
-
-        if not state.selected_targets:
-            state.selected_targets = [TARGETS["MAIN_GROUP"]]
-
-        await q.edit_message_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
-        return
-
     if data == "TOGGLE_COLOR":
         state.color_mode = not state.color_mode
         await q.edit_message_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
@@ -789,7 +701,6 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "START:1M":
         if state.running:
             await stop_session(context.bot, reason="restart_manual")
-
         await start_session(context.bot, started_by_schedule=False)
         context.application.create_task(engine_loop(context.application, state.session_id))
         await q.edit_message_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
@@ -804,6 +715,7 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "STOP:GRACEFUL":
         if state.running:
             state.graceful_stop_requested = True
+            # If no recovery running + no active bet -> stop now
             if state.streak_loss == 0 and state.active is None:
                 await stop_session(context.bot, reason="graceful_now")
         await q.edit_message_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
@@ -825,7 +737,7 @@ def main():
     application = (
         Application.builder()
         .token(BOT_TOKEN)
-        .post_init(post_init)  # ✅ Render/Py3.13 safe
+        .post_init(post_init)  # ✅ Fix runtime error on Render/Py3.13
         .build()
     )
 
