@@ -52,22 +52,18 @@ MAX_RECOVERY_STEPS = 8
 ENGINE_TICK = 0.8  # loop smooth
 
 # =========================
-# STICKERS (KEEP AS YOUR LIST)
+# STICKERS
 # =========================
 STICKERS = {
     "PRED_1M_BIG": "CAACAgUAAxkBAAEQTr5pcwrBGAZ5xLp_AUAFWSiWiS0rOwAC4R0AAg7MoFcKItGd1m2CsjgE",
     "PRED_1M_SMALL": "CAACAgUAAxkBAAEQTr9pcwrC7iH-Ei5xHz2QapE-DFkgLQACXxkAAoNWmFeTSY6h7y7VlzgE",
-
     "START_1M": "CAACAgUAAxkBAAEQUrRpdYvESSIrn4-Lm936I6F8_BaN-wACChYAAuBHOVc6YQfcV-EKqjgE",
     "START_END_ALWAYS": "CAACAgUAAxkBAAEQTjRpcmWdzXBzA7e9KNz8QgTI6NXlxgACuRcAAh2x-FaJNjq4QG_DujgE",
-
     "WIN_BIG": "CAACAgUAAxkBAAEQTjhpcmXknd41yv99at8qxdgw3ivEkAACyRUAAraKsFSky2Ut1kt-hjgE",
     "WIN_SMALL": "CAACAgUAAxkBAAEQTjlpcmXkF8R0bNj0jb1Xd8NF-kaTSQAC7DQAAhnRsVTS3-Z8tj-kajgE",
     "WIN_ALWAYS": "CAACAgUAAxkBAAEQUTZpdFC4094KaOEdiE3njwhAGVCuBAAC4hoAAt0EqVQXmdKVLGbGmzgE",
     "WIN_ANY": "CAACAgUAAxkBAAEQTydpcz9Kv1L2PJyNlbkcZpcztKKxfQACDRsAAoq1mFcAAYLsJ33TdUA4BA",
-
     "LOSS": "CAACAgUAAxkBAAEQTytpcz9VQoHyZ5ClbKSqKCJbpqX6yQACahYAAl1wAAFUL9xOdyh8UL84BA",
-
     "WIN_POOL": [
         "CAACAgUAAxkBAAEQTzNpcz9ns8rx_5xmxk4HHQOJY2uUQQAC3RoAAuCpcFbMKj0VkxPOdTgE",
         "CAACAgUAAxkBAAEQTzRpcz9ni_I4CjwFZ3iSt4xiXxFgkwACkxgAAnQKcVYHd8IiRqfBXTgE",
@@ -80,7 +76,6 @@ STICKERS = {
         "CAACAgUAAxkBAAEQUAtpc4HcYxkscyRY2rhAAcmqMR29eAACOBYAAh7fwVU5Xy399k3oFDgE",
         "CAACAgUAAxkBAAEQUCdpc4IuoaqPZ-5vn2RTlJZ_kbeXHQACXRUAAgln-FQ8iTzzJg_GLzgE",
     ],
-
     "SUPER_WIN": {
         2: "CAACAgUAAxkBAAEQTiBpcmUfm9aQmlIHtPKiG2nE2e6EeAACcRMAAiLWqFSpdxWmKJ1TXzgE",
         3: "CAACAgUAAxkBAAEQTiFpcmUgdgJQ_czeoFyRhNZiZI2lwwAC8BcAAv8UqFSVBQEdUW48HTgE",
@@ -92,7 +87,6 @@ STICKERS = {
         9: "CAACAgUAAxkBAAEQTi1pcmUmpSxAHo2pvR-GjCPTmkLr0AACLh0AAhCRqFRH5-2YyZKq1jgE",
         10: "CAACAgUAAxkBAAEQTi5pcmUmjmjp7oXg4InxI1dGYruxDwACqBgAAh19qVT6X_-oEywCkzgE",
     },
-
     "COLOR_RED": "CAACAgUAAxkBAAEQUClpc4JDd9n_ZQ45hPk-a3tEjFXnugACbhgAAqItoVd2zRs4VkXOHDgE",
     "COLOR_GREEN": "CAACAgUAAxkBAAEQUCppc4JDHWjTzBCFIOx2Hcjtz9UnnAACzRwAAnR3oVejA9DVGekyYTgE",
 }
@@ -114,7 +108,7 @@ def keep_alive():
     Thread(target=run_http, daemon=True).start()
 
 # =========================
-# PASSWORD (A1 CSV EXPORT - STABLE)
+# PASSWORD
 # =========================
 def fetch_password_a1() -> str:
     try:
@@ -134,7 +128,7 @@ async def get_live_password() -> str:
     return await asyncio.to_thread(fetch_password_a1)
 
 # =========================
-# PREDICTION ENGINE (ZIGZAG DETECTOR + TREND)
+# PREDICTION ENGINE (ZIGZAG + DOUBLE LOGIC)
 # =========================
 class PredictionEngine:
     def __init__(self):
@@ -160,37 +154,39 @@ class PredictionEngine:
         return max(60, base - (streak_loss * 5))
 
     def get_pattern_signal(self, current_streak_loss):
-        # We need at least 3 results to detect a ZigZag pattern (e.g., B-S-B)
         if len(self.history) < 3:
-            return self.history[0] if self.history else random.choice(["BIG", "SMALL"])
+            return random.choice(["BIG", "SMALL"])
 
-        h = self.history
-        last = h[0]
-        prev1 = h[1]
-        prev2 = h[2]
+        last = self.history[0]
+        prev1 = self.history[1]
+        prev2 = self.history[2]
 
-        # =========================================================
-        # 🔥 CORE LOGIC: ZIGZAG vs TREND
-        # =========================================================
-        
-        # 1. ZigZag Mode Check
-        # যদি লাস্ট ৩টা রেজাল্ট B-S-B বা S-B-S হয়
-        if (last != prev1) and (prev1 != prev2):
-            # তার মানে ZigZag চলছে (মার্কেট লাফাচ্ছে)
-            # আমরা লাস্ট রেজাল্টের উল্টা ধরব (Opposite)
+        # ডিফল্ট প্রেডিকশন: Trend Follow (লাস্ট রেজাল্ট কপি)
+        prediction = last
+
+        # =================================================
+        # 🔥 LOGIC 1: ZIGZAG DETECTION (B S B / S B S)
+        # =================================================
+        # যদি দেখি লাস্ট ৩টা রেজাল্ট জিগজ্যাগ (ভিন্ন ভিন্ন)
+        if last != prev1 and prev1 != prev2:
+            # তাহলে ZigZag Mode: উল্টা ধরো
             prediction = "SMALL" if last == "BIG" else "BIG"
-            
-        # 2. Default / Trend Mode
-        # অন্যথায় (যদি ড্রাগন বা ডাবল চলে), আমরা লাস্ট রেজাল্ট কপি করব
-        else:
+
+        # =================================================
+        # 🔥 LOGIC 2: DOUBLE/DRAGON (B B / S S)
+        # =================================================
+        # যদি দেখি লাস্ট ২টা রেজাল্ট সেম (B B / S S)
+        elif last == prev1:
+            # তাহলে Double Mode: সেম ধরো
             prediction = last
 
-        # =========================================================
-        # 🛡️ TRAP RECOVERY
-        # =========================================================
-        # যদি দেখি প্যাটার্ন ডিটেকশন ভুল হয়েছে (টানা ২টা লস)
-        # তখন আমরা ফ্লিপ করব
-        if current_streak_loss >= 2:
+        # =================================================
+        # 🛡️ LOSS RESET (LOSS হলে আগের লজিক)
+        # =================================================
+        # যদি ১টা লস হয় (মানে প্যাটার্ন ভেঙে গেছে), 
+        # তখন আমরা রিস্ক না নিয়ে সাধারণ Trend/Reverse রিকভারি লজিক চালাব।
+        if current_streak_loss > 0:
+            # সিম্পল রিকভারি: ফ্লিপ
             prediction = "SMALL" if prediction == "BIG" else "BIG"
 
         self.last_prediction = prediction
@@ -206,6 +202,7 @@ def now_bd_str() -> str:
 class ActiveBet:
     predicted_issue: str
     pick: str
+    random_color: Optional[str] = None # For random color
     checking_msg_ids: Dict[int, int] = field(default_factory=dict)
 
 @dataclass
@@ -231,17 +228,15 @@ class BotState:
 
     selected_targets: List[int] = field(default_factory=lambda: [TARGETS["MAIN_GROUP"]])
 
-    color_mode: bool = False  # default OFF always
+    color_mode: bool = False  # Random color mode
 
-    # graceful stop after win (manual)
     graceful_stop_requested: bool = False
-
     stop_event: asyncio.Event = field(default_factory=asyncio.Event)
 
 state = BotState()
 
 # =========================
-# FETCH (POST, typeId=1)
+# FETCH API
 # =========================
 def _fetch_latest_issue_sync() -> Optional[dict]:
     payload = {
@@ -273,13 +268,10 @@ async def fetch_latest_issue() -> Optional[dict]:
     return await asyncio.to_thread(_fetch_latest_issue_sync)
 
 # =========================
-# MESSAGES (Premium)
+# MESSAGES
 # =========================
 def pick_badge(pick: str) -> str:
     return "🟢 <b>BIG</b>" if pick == "BIG" else "🔴 <b>SMALL</b>"
-
-def color_badge_from_pick(pick: str) -> str:
-    return "🟩 <b>GREEN</b>" if pick == "BIG" else "🟥 <b>RED</b>"
 
 def marketing_block() -> str:
     return (
@@ -288,10 +280,13 @@ def marketing_block() -> str:
         f"🔗 <b><a href='{REG_LINK}'>REGISTRATION LINK</a></b>"
     )
 
-def format_signal(issue: str, pick: str, conf: int) -> str:
+def format_signal(issue: str, pick: str, conf: int, rand_col: Optional[str]) -> str:
     entry = f"🎯 <b>Entry:</b> {pick_badge(pick)}"
-    if state.color_mode:
-        entry += f"  |  {color_badge_from_pick(pick)}"
+    
+    # Random Color Display
+    if state.color_mode and rand_col:
+        c_txt = "🟩 <b>GREEN</b>" if rand_col == "GREEN" else "🟥 <b>RED</b>"
+        entry += f"  |  {c_txt}"
 
     return (
         f"⚡ <b>{BRAND_NAME}</b> ⚡\n"
@@ -359,7 +354,8 @@ def panel_text() -> str:
     total = state.wins + state.losses
     wr = (state.wins / total * 100) if total else 0.0
 
-    color = "🎨 <b>COLOR:</b> <b>ON</b>" if state.color_mode else "🎨 <b>COLOR:</b> <b>OFF</b>"
+    color = "🎨 <b>COLOR:</b> <b>RANDOM</b>" if state.color_mode else "🎨 <b>COLOR:</b> <b>OFF</b>"
+    
     grace = "🧠 <b>STOP AFTER WIN:</b> ✅" if state.graceful_stop_requested else "🧠 <b>STOP AFTER WIN:</b> ❌"
 
     return (
@@ -380,7 +376,7 @@ def panel_text() -> str:
 
 def selector_markup() -> InlineKeyboardMarkup:
     rows = [
-        [InlineKeyboardButton("🎨 Color: ON" if state.color_mode else "🎨 Color: OFF", callback_data="TOGGLE_COLOR")],
+        [InlineKeyboardButton("🎨 Random Color", callback_data="TOGGLE_COLOR")],
         [InlineKeyboardButton("⚡ Start 1 MIN", callback_data="START:1M")],
         [InlineKeyboardButton("🧠 Stop After Win", callback_data="STOP:GRACEFUL"),
          InlineKeyboardButton("🛑 Stop Now", callback_data="STOP:FORCE")],
@@ -456,8 +452,8 @@ async def start_session(bot):
     state.last_result_issue = None
     state.last_signal_issue = None
 
-    # default OFF always
-    state.color_mode = False
+    # Color mode is manually toggled, we don't force it off
+    # state.color_mode = False 
 
     reset_stats()
 
@@ -465,7 +461,7 @@ async def start_session(bot):
     await broadcast_sticker(bot, STICKERS["START_END_ALWAYS"])
 
 # =========================
-# ENGINE LOOP (Result first, then signal)
+# ENGINE LOOP
 # =========================
 async def engine_loop(app: Application, my_session: int):
     bot = app.bot
@@ -508,6 +504,7 @@ async def engine_loop(app: Application, my_session: int):
                     await broadcast_sticker(bot, STICKERS["SUPER_WIN"][state.streak_win])
                 else:
                     await broadcast_sticker(bot, random.choice(STICKERS["WIN_POOL"]))
+                
                 await broadcast_sticker(bot, STICKERS["WIN_BIG"] if res_type == "BIG" else STICKERS["WIN_SMALL"])
                 await broadcast_sticker(bot, STICKERS["WIN_ANY"])
             else:
@@ -526,7 +523,6 @@ async def engine_loop(app: Application, my_session: int):
             state.active = None
             resolved_this_tick = True
 
-            # Manual graceful stop: stop after a WIN
             if state.graceful_stop_requested and is_win:
                 await stop_session(bot, reason="graceful_done")
                 break
@@ -545,13 +541,19 @@ async def engine_loop(app: Application, my_session: int):
             pred = state.engine.get_pattern_signal(state.streak_loss)
             conf = state.engine.calc_confidence(state.streak_loss)
 
+            # Random Color Generation
+            rand_color = None
+            if state.color_mode:
+                rand_color = random.choice(["GREEN", "RED"])
+
             s_stk = STICKERS["PRED_1M_BIG"] if pred == "BIG" else STICKERS["PRED_1M_SMALL"]
             await broadcast_sticker(bot, s_stk)
 
-            if state.color_mode:
-                await broadcast_sticker(bot, STICKERS["COLOR_GREEN"] if pred == "BIG" else STICKERS["COLOR_RED"])
+            # Sticker for color if mode is ON
+            if state.color_mode and rand_color:
+                await broadcast_sticker(bot, STICKERS["COLOR_GREEN"] if rand_color == "GREEN" else STICKERS["COLOR_RED"])
 
-            await broadcast_message(bot, format_signal(next_issue, pred, conf))
+            await broadcast_message(bot, format_signal(next_issue, pred, conf, rand_color))
 
             checking_ids = {}
             for cid in state.selected_targets:
@@ -561,7 +563,7 @@ async def engine_loop(app: Application, my_session: int):
                 except Exception:
                     pass
 
-            state.active = ActiveBet(predicted_issue=next_issue, pick=pred, checking_msg_ids=checking_ids)
+            state.active = ActiveBet(predicted_issue=next_issue, pick=pred, random_color=rand_color, checking_msg_ids=checking_ids)
             state.last_signal_issue = next_issue
 
         await asyncio.sleep(ENGINE_TICK)
@@ -637,7 +639,6 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "STOP:GRACEFUL":
         if state.running:
             state.graceful_stop_requested = True
-            # If no recovery running + no active bet -> stop now
             if state.streak_loss == 0 and state.active is None:
                 await stop_session(context.bot, reason="graceful_now")
         await q.edit_message_text(panel_text(), parse_mode=ParseMode.HTML, reply_markup=selector_markup())
