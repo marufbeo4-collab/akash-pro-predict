@@ -128,7 +128,7 @@ async def get_live_password() -> str:
     return await asyncio.to_thread(fetch_password_a1)
 
 # =========================
-# PREDICTION ENGINE (ZIGZAG + DOUBLE LOGIC)
+# PREDICTION ENGINE (ZIGZAG LOOP + COPY PASTE RESET)
 # =========================
 class PredictionEngine:
     def __init__(self):
@@ -154,43 +154,41 @@ class PredictionEngine:
         return max(60, base - (streak_loss * 5))
 
     def get_pattern_signal(self, current_streak_loss):
+        # ইতিহাস খুব ছোট হলে ডিফল্ট
         if len(self.history) < 3:
-            return random.choice(["BIG", "SMALL"])
+            return self.history[0] if self.history else random.choice(["BIG", "SMALL"])
 
         last = self.history[0]
         prev1 = self.history[1]
         prev2 = self.history[2]
 
-        # ডিফল্ট প্রেডিকশন: Trend Follow (লাস্ট রেজাল্ট কপি)
-        prediction = last
-
-        # =================================================
-        # 🔥 LOGIC 1: ZIGZAG DETECTION (B S B / S B S)
-        # =================================================
-        # যদি দেখি লাস্ট ৩টা রেজাল্ট জিগজ্যাগ (ভিন্ন ভিন্ন)
-        if last != prev1 and prev1 != prev2:
-            # তাহলে ZigZag Mode: উল্টা ধরো
-            prediction = "SMALL" if last == "BIG" else "BIG"
-
-        # =================================================
-        # 🔥 LOGIC 2: DOUBLE/DRAGON (B B / S S)
-        # =================================================
-        # যদি দেখি লাস্ট ২টা রেজাল্ট সেম (B B / S S)
-        elif last == prev1:
-            # তাহলে Double Mode: সেম ধরো
-            prediction = last
-
-        # =================================================
-        # 🛡️ LOSS RESET (LOSS হলে আগের লজিক)
-        # =================================================
-        # যদি ১টা লস হয় (মানে প্যাটার্ন ভেঙে গেছে), 
-        # তখন আমরা রিস্ক না নিয়ে সাধারণ Trend/Reverse রিকভারি লজিক চালাব।
+        # =========================================================
+        # 🛡️ LOGIC 1: LOSS RECOVERY (COPY PASTE MODE)
+        # =========================================================
+        # ইউজার বলেছেন: "loss hoilei abr oi copy paste mod cholbe"
+        # অর্থাৎ লস হলে আমরা সোজা লাস্ট রেজাল্ট কপি করব (Trend Follow)।
         if current_streak_loss > 0:
-            # সিম্পল রিকভারি: ফ্লিপ
-            prediction = "SMALL" if prediction == "BIG" else "BIG"
+            return last
 
-        self.last_prediction = prediction
-        return prediction
+        # =========================================================
+        # ⚡ LOGIC 2: ZIGZAG MODE (WINNING STATE)
+        # =========================================================
+        # ইউজার বলেছেন: "recent 3 ta jodi small big small khele ba 
+        # 3 ta big small big khele thlei zigzag mood e chole jabe"
+        # এবং "cholte thakbe jotokkhon loss na hoy".
+        
+        # চেক: লাস্ট ৩টা রেজাল্ট কি জিগজ্যাগ? (B S B অথবা S B S)
+        is_zigzag = (last != prev1 and prev1 != prev2)
+        
+        if is_zigzag:
+            # জিগজ্যাগ মোড: উল্টা ধরব (B থাকলে S, S থাকলে B)
+            return "SMALL" if last == "BIG" else "BIG"
+
+        # =========================================================
+        # 🐢 LOGIC 3: DEFAULT COPY PASTE (DRAGON/TREND)
+        # =========================================================
+        # যদি জিগজ্যাগ না থাকে এবং লসও না থাকে, তবে ডিফল্ট কপি পেস্ট।
+        return last
 
 # =========================
 # BOT STATE
