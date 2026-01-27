@@ -32,7 +32,7 @@ CHANNEL_LINK = "https://t.me/N_JCOMMUNITY"
 
 # TK CLUB MARKETING
 REG_LINK = "https://tkclub2.com/#/register?invitationCode=54348203116"
-OWNER_USERNAME = "@OWNER_MARUF_TOP"  # চাইলে akash owner দিলে বদলাবেন
+OWNER_USERNAME = "@LEADER_AKASH69"  # চাইলে akash owner দিলে বদলাবেন
 
 # Targets (You gave)
 TARGETS = {
