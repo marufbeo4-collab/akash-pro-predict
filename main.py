@@ -128,7 +128,7 @@ async def get_live_password() -> str:
     return await asyncio.to_thread(fetch_password_a1)
 
 # =========================
-# PREDICTION ENGINE (ZIGZAG PRIORITY)
+# PREDICTION ENGINE (UPDATED ZIGZAG + TREND LOGIC)
 # =========================
 class PredictionEngine:
     def __init__(self):
@@ -154,7 +154,6 @@ class PredictionEngine:
         return max(60, base - (streak_loss * 5))
 
     def get_pattern_signal(self, current_streak_loss):
-        # ইতিহাস খুব ছোট হলে ডিফল্ট
         if len(self.history) < 3:
             return self.history[0] if self.history else random.choice(["BIG", "SMALL"])
 
@@ -163,25 +162,22 @@ class PredictionEngine:
         prev2 = self.history[2]
 
         # =========================================================
-        # 🔥 PRIORITY 1: ZIGZAG MODE (B-S-B or S-B-S)
+        # 🛡️ LOGIC 1: LOSS RESET (COPY PASTE / TREND MODE)
         # =========================================================
-        # যদি লাস্ট ৩টা জিগজ্যাগ হয়, তবে লস থাকলেও এটা ফলো করবে।
-        if last != prev1 and prev1 != prev2:
-            # ZigZag Mode: উল্টা ধরো
-            return "SMALL" if last == "BIG" else "BIG"
-
-        # =========================================================
-        # 🔥 PRIORITY 2: DOUBLE MODE (B-B or S-S)
-        # =========================================================
-        # যদি লাস্ট ২টা সেম হয়, তবে সেম ধরবে।
-        if last == prev1:
+        if current_streak_loss > 0:
             return last
 
         # =========================================================
-        # 🐢 PRIORITY 3: DEFAULT / LOSS RECOVERY
+        # ⚡ LOGIC 2: ZIGZAG MODE (WINNING STATE)
         # =========================================================
-        # যদি কোনো স্ট্রং প্যাটার্ন না থাকে (বা প্যাটার্ন ভেঙে যায়), 
-        # তখন আমরা সেফ মোড (Trend Follow/Copy Paste) এ থাকব।
+        is_zigzag = (last != prev1 and prev1 != prev2)
+        
+        if is_zigzag:
+            return "SMALL" if last == "BIG" else "BIG"
+
+        # =========================================================
+        # 🐢 LOGIC 3: DEFAULT (COPY PASTE)
+        # =========================================================
         return last
 
 # =========================
@@ -275,7 +271,6 @@ def marketing_block() -> str:
 def format_signal(issue: str, pick: str, conf: int, rand_col: Optional[str]) -> str:
     entry = f"🎯 <b>Entry:</b> {pick_badge(pick)}"
     
-    # Random Color Display
     if state.color_mode and rand_col:
         c_txt = "🟩 <b>GREEN</b>" if rand_col == "GREEN" else "🟥 <b>RED</b>"
         entry += f"  |  {c_txt}"
@@ -346,7 +341,7 @@ def panel_text() -> str:
     total = state.wins + state.losses
     wr = (state.wins / total * 100) if total else 0.0
 
-    color = "🎨 <b>COLOR:</b> <b>ON</b>" if state.color_mode else "🎨 <b>COLOR:</b> <b>OFF</b>"
+    color = "🎨 <b>COLOR:</b> <b>RANDOM</b>" if state.color_mode else "🎨 <b>COLOR:</b> <b>OFF</b>"
     
     grace = "🧠 <b>STOP AFTER WIN:</b> ✅" if state.graceful_stop_requested else "🧠 <b>STOP AFTER WIN:</b> ❌"
 
